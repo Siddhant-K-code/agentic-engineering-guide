@@ -3,8 +3,42 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
 <footer class="border-t border-[var(--border-subtle)]">
-  <div class="max-w-2xl mx-auto px-6 py-8 lg:px-10">
-    <div class="flex flex-col sm:flex-row justify-between gap-4 text-[12px] text-[var(--text-tertiary)]">
+  <div class="max-w-2xl mx-auto px-6 lg:px-10">
+    <!-- Support card -->
+    <div class="my-8 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5">
+      <div class="flex items-start gap-3.5">
+        <div class="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center shrink-0 mt-0.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-[14px] font-medium text-[var(--text-primary)] mb-1">Support independent writing</p>
+          <p class="text-[13px] text-[var(--text-tertiary)] leading-relaxed mb-4">If this was useful, consider supporting my open source work and independent writing.</p>
+          <div class="flex flex-wrap gap-2.5">
+            <a
+              href="https://github.com/sponsors/Siddhant-K-code"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center h-8 px-3.5 text-[13px] font-medium border border-[var(--border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-tertiary)] transition-colors"
+            >
+              Sponsor on GitHub
+            </a>
+            <a
+              href="https://buymeacoffee.com/siddhantkhare"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center h-8 px-3.5 text-[13px] font-medium border border-[var(--border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-tertiary)] transition-colors"
+            >
+              Buy me a coffee
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer links -->
+    <div class="py-6 flex flex-col sm:flex-row justify-between gap-4 text-[12px] text-[var(--text-tertiary)]">
       <div>
         <a href={`${base}/`} class="hover:text-[var(--text-primary)] transition-colors">The Agentic Engineering Guide</a>
         <span class="mx-1.5">·</span>

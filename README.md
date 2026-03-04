@@ -12,9 +12,10 @@ By [Siddhant Khare](https://siddhantkhare.com) · February 2026
 
 [**siddhant-k-code.github.io/agentic-engineering-guide**](https://siddhant-k-code.github.io/agentic-engineering-guide)
 
-## Buy the book
+## Support
 
-[**siddhantkhare.gumroad.com**](https://siddhantkhare.gumroad.com)
+- [Sponsor on GitHub](https://github.com/sponsors/Siddhant-K-code)
+- [Buy me a coffee](https://buymeacoffee.com/siddhantkhare)
 
 ---
 
