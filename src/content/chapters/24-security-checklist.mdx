@@ -1,0 +1,133 @@
+---
+title: "Security Checklist & Review Policies"
+chapter: 24
+part: 8
+partTitle: "Production Workflows"
+description: "Authentication and Identity (4 points) - Every agent needs a unique identity - not a shared service account, not the developer’s personal credentials. Each agent session must have "
+order: 124
+---
+
+## The 20-point security Checklist
+Before deploying any agent to production, verify twenty things across
+five categories. This checklist isn’t aspirational - it’s a gate. If you
+can’t check an item, you have a gap that needs to be addressed before
+deployment.
+
+**Authentication and Identity (4 points):** Every agent needs a
+unique identity - not a shared service account, not the developer’s
+personal credentials. Each agent session must have a unique session ID
+that appears in all traces, logs, and audit records. No credentials
+should be hardcoded in agent configurations, prompts, or AGENTS.md
+files. API keys must be rotated on a defined schedule (at minimum
+quarterly, ideally monthly for production agents).
+
+**Authorization (4 points):** Least-privilege permissions must be
+configured - the agent should have access to exactly what it needs and
+nothing more. File access must be restricted to specific directories
+(the project’s source code, not the entire filesystem). Network access
+must be limited to allowlisted domains (your API endpoints, your package
+registry, not the entire internet). Production database access must
+require explicit human approval for each session.
+
+**Runtime Protection (4 points):** Agents must run in sandboxed
+environments - ephemeral containers, VMs, or managed platforms with
+process isolation. Cost budgets must be enforced per session with
+automatic termination when exceeded. A kill switch must exist and must
+have been tested (not just configured - actually tested by triggering
+it). Resource limits for CPU, memory, and wall-clock time must be
+configured and enforced.
+
+**Input/Output Security (4 points):** No secrets should exist in
+git history (run a secrets scanner as part of CI). Environment files
+must be gitignored. Tool responses must be validated against expected
+schemas before being added to the agent’s context. Output filtering must
+block exfiltration patterns - base64-encoded data in unexpected places,
+URLs to unknown domains, shell commands that pipe data to external
+servers.
+
+**Audit and Monitoring (4 points):** All agent actions must be
+logged with full traces including tool calls, arguments, and results.
+Logs must be retained for at least 90 days (longer for regulated
+industries). Alerts must fire on anomalous behavior - cost spikes,
+unusual tool call patterns, access to unexpected resources. Monthly
+access pattern reviews must be scheduled and conducted.
+
+Score your deployment out of twenty. Below twelve, don’t deploy - you
+have fundamental gaps. Between twelve and sixteen, deploy with close
+monitoring and a plan to address the gaps. Above sixteen, you’re
+production-ready.
+
+## Two-Layer review policy
+Agent-generated code should go through two layers of review. The first
+layer is fully automated: type checking, test execution, linting,
+security scanning, and architecture enforcement. Code that passes all
+automated checks proceeds to the second layer. The second layer is human
+review, focused on the things automation can’t catch: architectural fit,
+business logic correctness, security implications, and whether the
+approach makes sense in the broader context of the system.
+
+This two-layer approach is essential because it focuses human attention
+where it matters. Without it, engineers spend their review time catching
+import errors and style violations - work that a linter should handle.
+With it, engineers review architecture and judgment calls - the work
+that actually requires human intelligence.
+
+The first layer should be fast - under two minutes for most PRs. If your
+automated checks take longer, engineers will skip them or context-switch
+while waiting, both of which reduce effectiveness. Invest in
+parallelizing checks, caching build artifacts, and running only affected
+tests. The goal is a tight feedback loop where the agent gets automated
+feedback quickly enough to self-correct before a human ever sees the
+code.
+
+The second layer should be structured. Don’t just ask engineers to
+"review the PR." Give them a checklist: Does this change fit the
+existing architecture? Is the business logic correct? Are there security
+implications? Would you have approached this differently, and if so,
+why? Does this change make the codebase easier or harder to maintain?
+Structured review questions produce more consistent, higher-quality
+reviews than open-ended "looks good to me" approvals.
+
+## Access control policies
+Every team deploying agents needs a written access control policy that
+defines permission levels. The policy should be a living document,
+reviewed quarterly, and updated whenever a new agent capability is added
+or an incident reveals a gap.
+
+**Read-only agents** can analyze code, generate documentation, and
+produce reports but cannot write files or execute commands. This is the
+safest permission level and should be the default for new agent
+deployments. Use it for code analysis, documentation generation, and
+codebase exploration.
+
+**Development agents** can read and write source code and run build
+and test commands but cannot access production systems or secrets. This
+is the standard permission level for coding agents. The key constraint
+is the boundary between development and production - a development agent
+should never be able to reach a production database, a production API,
+or a production secrets store.
+
+**CI/CD agents** can create pull requests, trigger pipelines, and
+run deployment scripts but cannot merge without human approval. This
+permission level is appropriate for agents that participate in the
+deployment pipeline - running tests, generating changelogs, creating
+release PRs. The human approval gate before merge is non-negotiable.
+
+**Operations agents** can access staging environments and read
+production logs but require human approval for all write actions. This
+is the most sensitive permission level and should be granted sparingly.
+Operations agents are useful for incident investigation (reading logs,
+analyzing metrics) but should never be able to modify production state
+without explicit human approval.
+
+The policy should also define prohibited actions that apply to all
+permission levels: accessing credentials or secrets stores, making
+outbound network requests to non-allowlisted domains, modifying
+infrastructure configuration (Terraform, CloudFormation, Kubernetes
+manifests), running destructive commands (DROP TABLE, rm -rf, force
+push), and accessing other teams’ repositories without explicit
+permission.
+
+**Related Concepts:** Zanzibar (Chapter 8), Sandboxing (Chapter 10)
+**Related Workflows:** Your First Agent in Production (23.1),
+Backpressure (Chapter 32)

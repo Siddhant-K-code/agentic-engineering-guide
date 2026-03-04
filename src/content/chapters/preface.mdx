@@ -1,0 +1,31 @@
+---
+title: "Preface"
+description: "I started writing this book because I couldn’t find the one I needed."
+order: 1
+---
+
+I started writing this book because I couldn’t find the one I needed.
+
+In mid-2023, I started experimenting with retrieval-augmented generation. The idea was simple: give a language model access to your own data and let it answer questions. I built pipelines, chunked documents, tuned embeddings, fought with vector databases. It worked - sometimes. The failure modes were fascinating and frustrating in equal measure. A model would confidently cite a document it had never seen, or ignore the one piece of context that actually mattered. I spent months learning where RAG breaks and why.
+
+Then the ground shifted. Models got longer context windows. Function calling appeared. Suddenly the model wasn’t just answering questions - it was taking actions. The jump from “retrieve and summarize” to “plan and execute” happened faster than anyone expected. By early 2024, I was building systems where a language model could read a codebase, decide what to change, write the code, and run the tests. The RAG pipeline I’d spent months building became one small piece of a much larger architecture.
+
+What followed was a year of noise. MCP servers. Agent-to-agent protocols. A new framework every week. Every vendor had an “agentic” product. Every conference had an “agents” track. I tried most of them - built MCP integrations, wired up tool chains, experimented with multi-agent orchestration, wrote authorization layers, broke things in production. Some of it worked. A lot of it didn’t. The gap between demo and deployment was enormous.
+
+Somewhere in the middle of all that, I noticed something else. I was getting faster, but I was also getting more tired. The tools were generating code at a pace I couldn’t review. Pull requests piled up. The meditative part of programming - the quiet stretch between understanding a problem and seeing the solution work - was disappearing. I wasn’t writing code anymore; I was judging code, all day, on an assembly line that never paused.
+
+In February 2026, I wrote an essay about it: “AI fatigue is real and nobody talks about it.” It hit #1 on Hacker News. Over 300 comments, most of them from engineers saying the same thing - they were productive on paper but exhausted in practice. Business Insider, Futurism, and NDTV covered it. The Chosun Ilbo ran it in South Korea. Newsletters and podcasts picked it up. Hundreds of engineers reached out directly. The response made one thing clear: this wasn’t just my experience. The entire industry was feeling the weight of AI-accelerated work without the infrastructure to make it sustainable.
+
+That response shaped this book. The technical chapters - context engineering, authorization, cost control - were already drafted. But the AI fatigue moment made me add something I hadn’t planned: chapters on sustainable adoption, the conductor model, and how to measure what actually matters instead of what’s easy to count. The engineering problems and the human problems turned out to be the same problem.
+
+Through all of that, I kept looking for a book that tied it together. Not a tutorial on prompt engineering. Not a vendor’s guide to their platform. A book about the engineering decisions - context management, authorization, cost control, evaluation, adoption - that determine whether agents actually work in practice. I couldn’t find it, so I wrote it.
+
+This book captures the patterns I’ve seen work and the ones I’ve seen fail. It’s organized around the decisions you’ll face, in roughly the order you’ll face them. It’s opinionated - I tell you what I think works and what doesn’t, based on building these systems. Where the evidence is ambiguous, I say so. Where I’m speculating, I label it clearly.
+
+The book is deliberately model-agnostic. I reference specific models and their capabilities throughout, but the principles apply regardless of which model you choose. By the time you read this, there will be newer models with better benchmarks. The engineering patterns - how to manage context, how to authorize agents, how to measure impact - will still apply.
+
+I wrote this for the engineer who needs to make decisions about agent adoption this quarter. Not next year, not in theory - this quarter. The chapters are designed to be actionable: read one, and you should be able to make a better decision or implement a better practice by the end of the day.
+
+If this book saves you from one bad architectural decision, one security incident, or one wasted month chasing the wrong abstraction, it will have been worth writing.
+
+*- Siddhant Khare* *(February 2026)*

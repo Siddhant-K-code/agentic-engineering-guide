@@ -1,0 +1,266 @@
+---
+title: "Agent Evaluation & Testing"
+chapter: 26
+part: 9
+partTitle: "Production Engineering"
+description: "This creates a testing problem with no precedent in software engineering. A function that takes an integer and returns an integer can be tested with assertions. An agent that takes"
+order: 126
+---
+
+## Why agent testing is different
+Traditional software testing relies on deterministic inputs and outputs.
+Agent testing doesn’t have that luxury. The same prompt can produce
+different tool call sequences, different reasoning chains, and different
+final answers - all of which might be correct.
+
+This creates a testing problem with no precedent in software
+engineering. A function that takes an integer and returns an integer can
+be tested with assertions. An agent that takes a task description and
+produces a multi-file code change can’t be tested the same way - the
+output is too complex, too variable, and too context-dependent for
+simple assertions.
+
+The solution is to test at multiple levels, each catching different
+categories of errors. Lower levels use deterministic assertions (fast,
+cheap, reliable). Higher levels use LLM-as-judge evaluation (slower,
+more expensive, but catches semantic errors that assertions miss). The
+combination provides coverage that neither approach achieves alone.
+
+Agent testing requires a fundamentally different approach. You need to
+test at multiple levels:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Level], [What You Test], [How],
+  [**Unit**],
+  [Individual tool calls, prompt templates],
+  [Deterministic assertions],
+  [**Integration**],
+  [Tool chains, API interactions],
+  [Mock services + assertions],
+  [**Behavioral**],
+  [End-to-end task completion],
+  [LLM-as-judge + golden datasets],
+  [**Regression**],
+  [Prompt changes don’t break things],
+  [Before/after eval suites],
+  [**Performance**],
+  [Latency, cost, token usage],
+  [Benchmarks + budgets],
+)
+]
+
+## The eval framework landscape
+The tooling has matured significantly. Here’s what’s available:
+
+[**Braintrust**](https://www.braintrust.dev) - The most
+production-oriented eval platform. Tracks experiments, compares prompt
+versions, and integrates with CI/CD. Key feature: scoring functions that
+combine deterministic checks with LLM-as-judge.
+
+[**Promptfoo**](https://github.com/promptfoo/promptfoo) -
+Open-source, config-driven eval framework. Excellent for regression
+testing prompts. Runs locally or in CI.
+
+[**DeepEval**](https://github.com/confident-ai/deepeval) -
+Python-native, focuses on RAG and agent evaluation metrics. Built-in
+metrics for hallucination, answer relevancy, faithfulness.
+
+[**Arize Phoenix**](https://github.com/Arize-ai/phoenix) -
+Trace-based evaluation. Captures full agent traces and lets you evaluate
+at any step in the chain.
+
+[**LangSmith**](https://smith.langchain.com) - LangChain’s
+evaluation platform. Tight integration with LangChain/LangGraph agents.
+Dataset management and annotation tools.
+
+## The three testing patterns
+**Pattern 1: Deterministic Assertions**
+
+For things you can check without an LLM:
+
+```python
+def test_agent_uses_correct_tools():
+
+
+def test_agent_respects_token_budget():
+
+
+def test_agent_handles_tool_failure():
+```
+
+**Pattern 2: LLM-as-Judge**
+
+Deterministic assertions catch structural errors - the code doesn’t
+compile, the test doesn’t pass, the schema is invalid. But they can’t
+catch semantic errors - the code compiles but doesn’t do what was
+intended, the test passes but doesn’t test the right thing, the output
+is valid but misleading.
+
+LLM-as-judge evaluation uses a language model to evaluate the quality of
+another model’s output. The judge model receives the task description,
+the agent’s output, and a rubric (what constitutes good output for this
+task), and produces a quality score. This catches semantic errors that
+deterministic assertions miss.
+
+The key challenge with LLM-as-judge is calibration. The judge model has
+its own biases - it might prefer verbose output over concise output, or
+favor certain coding styles over others. Calibrate the judge by running
+it on a set of examples with known quality scores (rated by humans) and
+adjusting the rubric until the judge’s scores correlate with the human
+scores. A well-calibrated judge achieves 85-90% agreement with human
+evaluators.
+
+Use a different model for judging than for generation. If the same model
+generates and judges, it tends to rate its own output favorably. Using a
+different model (or a different version of the same model) provides a
+more objective evaluation.
+
+**Pattern 3: Golden Dataset Testing**
+
+Build a curated set of tasks with known-good outputs.
+
+## Agent benchmarks
+Know what your agent is being measured against:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Benchmark], [What It Tests], [Scores (Feb 2026)],
+  [**SWE-bench Verified**],
+  [Real GitHub issue resolution],
+  [Opus 4.6: 80.8%, GPT-5.2: 80.0%],
+  [**Terminal-Bench 2.0**],
+  [Real terminal-based coding tasks],
+  [GPT-5.3-Codex: 75.1%, Opus 4.6: 65.4%],
+  [**SWE-bench Pro**],
+  [Harder issue set, multi-file],
+  [GPT-5.3-Codex: 55.6%],
+  [**HumanEval**],
+  [Code generation correctness],
+  [Most models: 90-98%],
+  [**GAIA**],
+  [General AI assistant tasks],
+  [Top agents: 55-70%],
+  [**WebArena**],
+  [Web browsing and interaction],
+  [Top agents: 40-55%],
+  [**AgentBench**],
+  [Multi-domain agent tasks],
+  [Varies by domain],
+)
+]
+
+> SWE-bench Verified is the industry standard for coding agents. As of
+> February 2026, frontier models score ~80%. If your agent scores below
+> 50%, investigate your context engineering before blaming the model.
+> 
+
+## Building your own eval dataset
+Public benchmarks tell you how models perform on generic tasks. Your own
+eval dataset tells you how models perform on your tasks. The difference
+matters - a model that scores 80% on SWE-bench might score 60% on your
+codebase because your codebase has unusual conventions, domain-specific
+patterns, or dependencies that the model hasn’t seen in training.
+
+Building an eval dataset starts with collecting examples. Every time an
+agent produces output that a human corrects, save the task description,
+the agent’s output, and the corrected output. Over time, this collection
+becomes a golden dataset that reflects your specific requirements. Aim
+for 50-100 examples across your most common task types.
+
+The eval dataset should be diverse - it should include easy tasks (where
+you expect 95%+ success), medium tasks (where you expect 70-80%
+success), and hard tasks (where you expect 40-60% success). If all your
+eval tasks are easy, the eval won’t catch regressions. If all your eval
+tasks are hard, the eval will be noisy and hard to interpret.
+
+Update the eval dataset regularly. As your codebase evolves, old eval
+tasks may become irrelevant (the code they reference has been deleted)
+or misleading (the conventions they test have changed). Review and
+refresh the dataset quarterly.
+
+## The cost of not testing
+Teams that skip agent evaluation pay for it in three ways. First, prompt
+regressions - a change to the system prompt that improves one task type
+breaks another, and no one notices until a user complains. Second, model
+regressions - a model update changes behavior in subtle ways, and the
+team doesn’t detect it because they’re not running evals. Third, context
+regressions - a change to AGENTS.md or the retrieval pipeline degrades
+output quality, and the team attributes the degradation to the model
+rather than the context.
+
+The cost of building an eval pipeline is measured in days. The cost of
+not building one is measured in weeks of debugging, user complaints, and
+lost trust. Every team deploying agents to production should have an
+eval pipeline. No exceptions.
+
+## Building your eval pipeline
+The eval pipeline is the quality gate for your agent system. Just as you
+wouldn’t deploy application code without running tests, you shouldn’t
+deploy prompt changes without running evals. The pipeline should run
+automatically on every change to system prompts, tool definitions,
+AGENTS.md files, or agent configuration.
+
+A production eval pipeline has four stages. The first stage runs
+deterministic assertions - does the agent use the correct tools, does it
+respect token budgets, does it handle errors gracefully? These tests are
+fast (seconds) and catch obvious regressions. The second stage runs
+golden dataset tests - does the agent produce acceptable output for a
+curated set of tasks with known-good answers? These tests are slower
+(minutes) and catch quality regressions. The third stage runs
+LLM-as-judge evaluation - does the agent’s output meet quality criteria
+as evaluated by another model? These tests are the slowest (minutes to
+hours) and catch subtle quality issues. The fourth stage runs cost and
+performance benchmarks - does the agent complete tasks within budget and
+latency targets?
+
+The pipeline should produce a report that shows pass/fail for each
+stage, quality scores compared to the previous version, cost and latency
+metrics compared to the previous version, and specific examples of
+regressions (if any). The report should be reviewed by a human before
+the change is deployed - eval pipelines catch most regressions, but they
+can’t catch everything.
+
+A production eval pipeline runs on every prompt change.
+
+## Metrics to track
+The metrics that actually matter in production:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Metric], [What It Measures], [Target],
+  [**Task completion rate**],
+  [% of tasks completed successfully],
+  [\> 85%],
+  [**Tool call accuracy**],
+  [% of tool calls that were necessary],
+  [\> 90%],
+  [**Hallucination rate**],
+  [% of outputs with fabricated info],
+  [\< 5%],
+  [**Mean tool calls per task**],
+  [Efficiency of agent reasoning],
+  [Varies by task],
+  [**P95 latency**],
+  [Time to complete a task],
+  [\< 60s for simple tasks],
+  [**Cost per task**],
+  [API spend per completed task],
+  [Track trend, not absolute],
+  [**Human override rate**],
+  [% of tasks requiring human intervention],
+  [\< 15%],
+  [**Regression rate**],
+  [% of previously passing evals that now fail],
+  [0% (hard gate)],
+)
+]
+
+**Related Concepts:** Agent Traces (Chapter 14), Cost Tracking
+(Chapter 15), Measuring Impact (Chapter 25)

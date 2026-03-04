@@ -1,0 +1,230 @@
+---
+title: "Model Context Protocol (MCP)"
+chapter: 11
+part: 4
+partTitle: "Protocols & Standards"
+description: "The protocol was donated by Anthropic to the Agentic AI Foundation in December 2025, and adoption has been remarkably fast. Every major AI platform now supports MCP - Claude, ChatG"
+order: 111
+---
+
+## What MCP is
+[MCP](https://modelcontextprotocol.io) is a protocol for
+connecting AI agents to external systems. It defines how agents discover
+tools, call them, and process results. Before MCP, every agent framework
+had its own way of connecting to tools. LangChain had one approach,
+AutoGPT had another, custom agents had their own. If you built a tool
+integration for a database, you had to build it separately for each
+framework. MCP eliminates that duplication - build an MCP server once,
+and it works with any MCP-compatible agent.
+
+The protocol was donated by Anthropic to the Agentic AI Foundation in
+December 2025, and adoption has been remarkably fast. Every major AI
+platform now supports MCP: Claude, ChatGPT, Cursor, Gemini, VS Code,
+GitHub Copilot, Windsurf, and dozens of others. The npm and PyPI SDKs
+have over 97 million monthly downloads combined. Over 10,000 public MCP
+servers are available, covering everything from databases and file
+systems to Slack, GitHub, Jira, and Notion.
+
+## Protocol architecture
+MCP uses JSON-RPC 2.0 over two transport mechanisms. The stdio transport
+runs the MCP server as a subprocess and communicates over standard
+input/output - this is the simplest setup and works well for local
+development. The HTTP transport uses Server-Sent Events (SSE) for
+streaming and supports remote MCP servers - this is the production
+pattern for shared infrastructure.
+
+The protocol follows a client-server model. The agent (or agent
+framework) is the MCP client. The external system (database, API, file
+system) is wrapped in an MCP server. The client discovers what the
+server offers, then calls tools as needed during the agent session.
+
+### The three capability types
+MCP servers expose three types of capabilities, each serving a different
+purpose in the agent workflow.
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Capability], [Purpose], [Example],
+  [**Tools**],
+  [Actions the agent can take],
+  [`github.create_issue`, `db.query`, `fs.write`],
+  [**Resources**],
+  [Data the agent can read],
+  [Database schemas, file contents, API docs],
+  [**Prompts**],
+  [Reusable prompt templates],
+  [Code review template, bug report template],
+)
+]
+
+Tools are the most commonly used capability - they let agents take
+actions in external systems. Resources provide read-only access to data
+that the agent might need for context. Prompts are reusable templates
+that standardize how agents interact with specific systems. Most MCP
+servers expose only tools, but well-designed servers use all three to
+give agents a complete interface.
+
+## Building an MCP server
+Building an MCP server is straightforward with the official SDKs. The
+server defines its tools with names, descriptions, parameter schemas,
+and handler functions. The SDK handles the JSON-RPC protocol, transport
+negotiation, and capability discovery automatically. A typical MCP
+server for a REST API can be built in under 100 lines of code.
+
+The key design decisions when building an MCP server are tool
+granularity (one broad tool or many specific tools), parameter design
+(what the agent needs to specify versus what the server can infer), and
+error handling (how failures are communicated back to the agent). Overly
+broad tools force the agent to do more work in the prompt. Overly narrow
+tools create tool definition bloat. The sweet spot is tools that map to
+natural user intents - "create an issue," "query the database," "read a
+file" - rather than low-level API operations.
+
+## The backend for MCP (BFMCP) Pattern
+A design pattern from the Japanese developer community (documented on
+Zenn.dev) separates MCP protocol handling from business logic. The
+pattern is called "Backend for MCP" (BFMCP), by analogy with the
+"Backend for Frontend" (BFF) pattern in web architecture.
+
+The problem is straightforward. A naive MCP server for a database
+exposes raw SQL query capability to the agent. The agent can run any
+query - including queries that modify data, queries that access
+sensitive tables, and queries that consume excessive resources. Even
+with authorization controls, the attack surface is large.
+
+The BFMCP pattern interposes a backend service between the MCP server
+and the actual data source. The MCP server exposes high-level,
+business-logic operations ("get user profile," "list recent orders,"
+"search products") rather than low-level data access operations
+("execute SQL query"). The backend service translates these high-level
+operations into the appropriate data access calls, applying business
+rules, access controls, and rate limits along the way.
+
+This separation is important for three reasons: 1. Your MCP server stays
+thin - easy to test, easy to audit, easy to secure 2. Your business
+logic is reusable - it serves both MCP clients and REST clients 3.
+Security policies live in the backend - not scattered across MCP
+handlers, and enforced regardless of how the operation is invoked
+
+## MCP security considerations
+MCP’s rapid adoption has outpaced its security model. The current
+specification defines how agents discover and call tools, but it doesn’t
+define how agents authenticate, how permissions are scoped, or how tool
+calls are audited. This creates a security gap that every team deploying
+MCP in production needs to address.
+
+Security researchers have identified over 8,000 publicly visible MCP
+servers, many with no authentication at all. This means anyone who
+discovers the server’s endpoint can call its tools - reading data,
+modifying state, and potentially accessing sensitive systems. The
+situation is analogous to the early days of REST APIs, when many APIs
+shipped without authentication and were later exploited.
+
+MCP’s current specification has several specific security gaps:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Gap], [Risk], [Mitigation],
+  [No built-in authentication],
+  [Any client can connect],
+  [Add auth middleware],
+  [No authorization model],
+  [All tools accessible to all clients],
+  [Integrate OpenFGA],
+  [Tool descriptions are trusted],
+  [Malicious descriptions can mislead agents],
+  [Validate tool metadata],
+  [No rate limiting],
+  [Runaway agents can overwhelm servers],
+  [Add rate limiting middleware],
+  [No audit logging],
+  [No record of tool calls],
+  [Add logging middleware],
+)
+]
+
+### Adding authorization to MCP
+## MCPMark: Benchmarking real-world tool use
+Not all models are equally good at using MCP tools. MCPMark (NUS TRAIL /
+LobeHub, ICLR 2026) benchmarks 127 real-world tasks across Notion,
+GitHub, Filesystem, Postgres, and Playwright:
+
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,right,auto,).at(col),
+  inset: 6pt,
+  [Model], [Pass@1], [Avg Tool Calls/Task], [Notes],
+  [GPT-5 (medium reasoning)],
+  [52.6%],
+  [~17],
+  [Best overall as of Feb 2026],
+  [Claude Sonnet 4],
+  [\<30%],
+  [~16],
+  [Strong on code tasks],
+  [o3],
+  [\<30%],
+  [~18],
+  [High reasoning, lower tool use],
+  [DeepSeek V3.2],
+  [29.7%],
+  [~15],
+  [Best open-source],
+  [Gemini 3 Pro],
+  [50.6%],
+  [~17],
+  [Close to GPT-5],
+)
+]
+
+These scores are much lower than simple function-calling benchmarks
+because MCPMark tests multi-step workflows with real services. The gap
+between models narrows with better agent scaffolding and context
+engineering.
+
+## MCP in production: Lessons learned
+Teams that have deployed MCP in production report several patterns worth
+noting.
+
+**Tool proliferation is a real problem.** It’s tempting to expose
+every API endpoint as an MCP tool. Don’t. A model presented with 100
+tools spends significant context on tool definitions and makes worse
+tool selection decisions than a model presented with 20 well-designed
+tools. Curate your tool set aggressively - expose the tools agents
+actually need, not every tool you could expose.
+
+**Tool descriptions matter more than you think.** The model selects
+tools based on their descriptions. A tool described as "query the
+database" is less useful than a tool described as "execute a read-only
+SQL query against the application database, returns results as JSON,
+supports parameterized queries, maximum 1000 rows." The more specific
+and accurate the description, the better the model’s tool selection.
+
+**Error handling in MCP servers is critical.** When a tool call
+fails, the error message is fed back to the model as context. A generic
+"internal server error" gives the model nothing to work with. A specific
+"query failed: column 'user\_id' does not exist in table 'accounts', did
+you mean 'account\_id'?" gives the model enough information to
+self-correct. Invest in error messages - they’re part of your agent’s
+feedback loop.
+
+**Versioning MCP servers is necessary.** As your tools evolve, the
+schemas change. An agent that was trained on v1 of your tool schema may
+not work correctly with v2. Version your MCP servers (include the
+version in the server metadata) and maintain backward compatibility for
+at least one major version. Breaking changes should be communicated
+through the tool discovery mechanism, not discovered at runtime.
+
+**Monitoring MCP server health is essential.** An MCP server that’s
+down or slow degrades agent performance silently - the agent retries,
+waits, and eventually gives up or works around the missing tool. Monitor
+your MCP servers the same way you monitor your production APIs: uptime,
+latency, error rate, and throughput.
+
+**Related Concepts:** Context Window (4.1), Meta-MCP (5.7)
+**Related Workflows:** Setting Up MCP Servers for Your Team
+(Chapter 23)

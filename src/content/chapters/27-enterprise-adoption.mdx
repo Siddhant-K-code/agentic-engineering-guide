@@ -1,0 +1,267 @@
+---
+title: "Enterprise Adoption & Vendor Strategy"
+chapter: 27
+part: 9
+partTitle: "Production Engineering"
+description: "This is not an outlier. It’s the norm. Enterprise AI adoption in 2026 follows a predictable pattern - large budget allocation, restrictive vendor selection (driven by existing clou"
+order: 127
+---
+
+## The \$50M problem
+A domain architect at a major global bank shared this during a
+conversation in February 2026:
+
+> "We allocated \$50 million for AI initiatives. We’re only allowed to use
+> GitHub Copilot and Azure OpenAI. Our 300,000 token monthly limit gets
+> exhausted by the 7th of each month. Teams are sharing tokens like
+> rations."
+> 
+
+This is not an outlier. It’s the norm. Enterprise AI adoption in 2026
+follows a predictable pattern: large budget allocation, restrictive
+vendor selection (driven by existing cloud contracts and compliance
+requirements), insufficient token quotas, and frustrated engineers who
+know they could be more productive if the constraints were different.
+
+The root cause is that enterprise procurement processes were designed
+for SaaS subscriptions, not consumption-based AI services. A SaaS
+subscription costs the same whether you use it heavily or lightly. AI
+agent usage scales with activity - more tasks, more tokens, more cost.
+Enterprises that budget for AI like they budget for SaaS consistently
+underestimate consumption by 3-5x.
+
+The second problem is vendor restriction. Enterprise security teams
+approve one or two AI providers, and engineers are stuck with those
+providers regardless of whether they’re the best fit for the task. A
+team that needs Claude’s long-context capabilities is stuck with GPT
+because Azure OpenAI is the only approved provider. A team that needs a
+cheap model for simple tasks is forced to use an expensive model because
+it’s the only one available.
+
+Enterprise AI adoption in 2026 follows a predictable pattern.
+
+## Vendor lock-in patterns
+The three most common lock-in patterns in enterprise AI:
+
+**Pattern 1: Cloud Provider Lock-in**
+
+Your cloud provider offers an AI service. It’s the path of least
+resistance. It’s also a trap.
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Cloud Provider], [AI Service], [Lock-in Mechanism],
+  [**Microsoft Azure**],
+  [Azure OpenAI],
+  [Enterprise agreements, Active Directory integration, compliance
+  certifications],
+  [**AWS**],
+  [Bedrock],
+  [VPC integration, IAM policies, data residency],
+  [**Google Cloud**],
+  [Vertex AI],
+  [BigQuery integration, TPU access, Gemini exclusivity],
+)
+]
+
+The problem isn’t using these services. The problem is building your
+entire agent architecture around a single provider’s API surface.
+
+**Pattern 2: Model Provider Lock-in**
+
+Building directly against OpenAI’s API means you can’t switch to
+Anthropic or open-source models without rewriting your agent logic.
+
+```python
+# Locked in: Direct OpenAI dependency
+from openai import OpenAI
+client = OpenAI()
+response = client.chat.completions.create(
+)
+
+# Portable: Abstraction layer
+from litellm import completion
+response = completion(
+)
+```
+
+**Pattern 3: Framework Lock-in**
+
+LangChain, CrewAI, AutoGen - each framework has its own abstractions for
+defining agents, tools, and workflows. Switching frameworks means
+rewriting your agent logic, your tool integrations, and your
+orchestration code. The deeper you integrate with a framework’s
+abstractions, the harder it is to switch.
+
+The mitigation is to keep your framework integration thin. Your business
+logic - the actual work your agents do - should be
+framework-independent. The framework should handle the plumbing (model
+calls, tool routing, conversation management) while your code handles
+the logic (what tools to call, what context to provide, how to evaluate
+results). If you can swap frameworks by changing the plumbing layer
+without touching the logic layer, you’re not locked in.
+
+## Building a vendor-neutral agent architecture
+The goal is to isolate your agent logic from any single provider. This
+requires abstraction at three levels: the model layer (which LLM you’re
+calling), the tool layer (how tools are defined and called), and the
+orchestration layer (how the agent loop is managed).
+
+Key abstraction tools:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [What It Does], [Best For],
+  [**LiteLLM**],
+  [Unified API for 100+ LLM providers],
+  [Drop-in replacement, same OpenAI format],
+  [**OpenRouter**],
+  [API gateway with model routing],
+  [Cost optimization, fallback chains],
+  [**Portkey**],
+  [AI gateway with caching, retries, logging],
+  [Enterprise observability],
+  [**vLLM**],
+  [Self-hosted inference server],
+  [Data sovereignty, cost control],
+)
+]
+
+## Token quota management
+When your organization has a fixed token budget - which is the norm in
+enterprises with negotiated contracts - you need allocation strategies
+that prevent the budget from being exhausted before the end of the
+month. The bank architect’s story (300,000 tokens exhausted by the 7th)
+is common because most organizations allocate tokens equally without
+considering usage patterns.
+
+The first step is understanding your usage distribution. In most
+organizations, 20% of engineers consume 80% of the tokens. Power users
+who run agents all day consume 10-50x more than casual users who use AI
+for occasional questions. An equal allocation gives power users too
+little and casual users too much.
+
+**Organizational token allocation strategies:**
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Strategy], [How It Works], [Best For],
+  [**Equal split**],
+  [Each team gets monthly\_limit / num\_teams],
+  [Small orgs, equal workloads],
+  [**Priority-based**],
+  [Critical teams get larger allocations],
+  [Orgs with clear priorities],
+  [**Pay-per-use**],
+  [Teams charged against their budget],
+  [Large orgs, cost accountability],
+  [**Pooled with burst**],
+  [Shared pool, teams can burst up to 2x allocation],
+  [Flexible workloads],
+  [**Tiered models**],
+  [Expensive models for hard tasks, cheap models for easy],
+  [Cost-conscious orgs],
+)
+]
+
+## The enterprise adoption playbook
+What actually works for getting agents into production at large
+organizations:
+
+**Step 1: Start with a single, measurable use case**
+
+Not "AI for everything." Pick one workflow where you can measure
+before/after: - Code review automation (measure: review turnaround time)
+- Test generation (measure: coverage increase) - Documentation updates
+(measure: docs freshness)
+
+**Step 2: Build the abstraction layer first**
+
+Before writing any agent logic, set up LiteLLM or equivalent. This takes
+a day and saves months later.
+
+**Step 3: Instrument everything from day one**
+
+Every token, every tool call, every latency measurement. You’ll need
+this data to justify continued investment.
+
+**Step 4: Define success criteria before launch**
+
+"The agent should reduce code review turnaround from 48 hours to 4 hours
+for routine PRs, with a human override rate below 15%."
+
+**Step 5: Run shadow mode first**
+
+Agent runs alongside humans, outputs are compared but not acted upon.
+This builds trust and catches issues before they matter.
+
+**Step 6: Gradual rollout with kill switches**
+
+Start with one team, one repo, one workflow. Expand only after proving
+value. Always have a way to turn it off instantly.
+
+## The build vs. buy decision
+Every enterprise faces the build-versus-buy decision for agent
+infrastructure. The options range from fully managed platforms (Ona,
+Devin) to framework-based custom builds (LangChain, CrewAI) to fully
+custom implementations.
+
+**Buy (managed platform)** when you want to deploy agents quickly,
+you don’t have dedicated AI infrastructure engineers, you need
+enterprise features (SSO, audit logging, compliance certifications) out
+of the box, and you want the vendor to handle model updates, security
+patches, and infrastructure scaling. The trade-off is less customization
+and vendor dependency.
+
+**Build on a framework** when you have specific workflow
+requirements that managed platforms don’t support, you have AI
+infrastructure engineers who can maintain the system, you need deep
+integration with internal systems that aren’t exposed via standard
+protocols, and you want full control over the agent’s behavior and data
+flow. The trade-off is higher engineering investment and ongoing
+maintenance.
+
+**Build custom** when you have unique requirements that no
+framework supports, you need to run models on-premises for data
+sovereignty, you have a large AI engineering team, and you’re building
+agent infrastructure as a core competency. The trade-off is the highest
+engineering investment and the risk of building something that
+frameworks will support natively in six months.
+
+For most enterprises, the right answer is to start with a managed
+platform for the first use case, evaluate whether it meets your needs,
+and build custom only for the specific requirements the platform can’t
+handle. The worst outcome is spending six months building custom
+infrastructure that a managed platform could have provided on day one.
+
+## Navigating enterprise security reviews
+Enterprise security reviews for AI agent deployments follow a
+predictable pattern. The security team will ask about data handling
+(where does the data go, who can access it, how is it encrypted), model
+access (which models are used, where do they run, what data do they
+see), agent permissions (what can the agent do, how are permissions
+scoped, how are they audited), and incident response (what happens when
+the agent makes a mistake, how do you detect it, how do you remediate
+it).
+
+Prepare for these questions before the review. Document your data flow -
+exactly which data leaves your network, which data is sent to model
+providers, and which data stays on-premises. Document your permission
+model - the specific permissions each agent has, how they’re enforced,
+and how they’re audited. Document your incident response plan - the
+specific steps you’ll take when an agent produces bad output, including
+detection, containment, remediation, and post-incident review.
+
+The security review will go faster if you can demonstrate that you’ve
+thought about these issues proactively rather than reactively. The
+security checklist in Chapter 24 provides a framework that maps directly
+to the questions security teams ask.
+
+**Related Concepts:** AI Fatigue (Chapter 20), Conductor Model
+(Chapter 21), Maturity Model (Chapter 22)

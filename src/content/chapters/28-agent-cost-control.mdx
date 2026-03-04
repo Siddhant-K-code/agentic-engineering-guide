@@ -1,0 +1,249 @@
+---
+title: "Agent Cost Control & FinOps"
+chapter: 28
+part: 9
+partTitle: "Production Engineering"
+description: "The variability is the problem. You can’t budget for agent costs the way you budget for SaaS subscriptions or cloud infrastructure. You need real-time monitoring, per-session limit"
+order: 128
+---
+
+## Why agents are expensive by nature
+A chatbot makes one LLM call per user message. An agent makes 3-10x
+more. A single user request can trigger planning, tool selection,
+execution, verification, and response generation - easily consuming 5x
+the token budget of a direct chat completion. And unlike chatbot costs,
+which are predictable (one call per message, roughly the same size each
+time), agent costs are highly variable. A simple bug fix might take 3
+tool calls and cost \$0.05. A complex refactoring might take 50 tool
+calls and cost \$5.00. A runaway agent stuck in a retry loop might make
+200 tool calls and cost \$15.00 before anyone notices.
+
+The variability is the problem. You can’t budget for agent costs the way
+you budget for SaaS subscriptions or cloud infrastructure. You need
+real-time monitoring, per-session limits, and automatic kill switches -
+the same operational discipline you’d apply to any system with unbounded
+cost potential.
+
+Research from Zylos (February 2026) quantified the enterprise impact:
+
+The cost drivers that catch teams off guard:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Cost Driver], [Why It’s Hidden], [Impact],
+  [**Tool call overhead**],
+  [Each tool call adds schema tokens + result tokens],
+  [20-40% of total cost],
+  [**Output token premium**],
+  [Output tokens cost 3-4x input tokens],
+  [Verbose agents cost more],
+  [**Retry loops**],
+  [Failed tool calls trigger re-planning],
+  [2-5x cost on failures],
+  [**Context accumulation**],
+  [Each step adds to the context window],
+  [Later steps cost more],
+  [**Orchestration overhead**],
+  [Multi-agent routing, handoffs],
+  [10-20% overhead],
+)
+]
+
+## The four pillars of agent cost control
+**Pillar 1: Model Routing**
+
+Not every step needs GPT-5.2. Route tasks to the cheapest model that can
+handle them:
+
+```python
+# Model routing by task complexity
+class AgentModelRouter:
+```
+
+Research shows organizations using model routing save 40-85% compared to
+single-model approaches (MindStudio, February 2026). The savings come
+from two sources: cheaper models for simple tasks (the volume effect)
+and better models for hard tasks (the quality effect). A simple test
+generation task routed to GPT-5.2-mini at \$0.15/\$0.60 costs 95% less
+than the same task routed to Opus 4.6 at \$5/\$25 - and the output
+quality is comparable because the task doesn’t require the frontier
+model’s capabilities.
+
+The implementation is straightforward. Classify your tasks into 3-5
+complexity tiers. Assign a default model to each tier. Monitor quality
+per tier and adjust assignments when quality drops below your threshold.
+Most teams can implement basic model routing in a day and start seeing
+cost savings immediately.
+
+**Pillar 2: Caching**
+
+Cache at multiple levels:
+
+**Pillar 3: Token Budgets**
+
+Set hard limits per task:
+
+**Pillar 4: Prompt Optimization**
+
+Shorter prompts cost less. Measure and optimize:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Technique], [Token Savings], [Quality Impact],
+  [**Remove redundant instructions**],
+  [10-30%],
+  [None],
+  [**Use structured examples instead of verbose descriptions**],
+  [20-40%],
+  [Often improves],
+  [**Compress system prompts**],
+  [15-25%],
+  [Minimal if done carefully],
+  [**Use reference IDs instead of full content**],
+  [30-60%],
+  [Requires tool support],
+  [**Prune conversation history**],
+  [40-70%],
+  [Risk of losing context],
+)
+]
+
+## Building a cost culture
+Cost control isn’t just a technical problem - it’s a cultural one. Teams
+that treat agent costs as "someone else’s problem" consistently
+overspend. Teams that make costs visible and attributable consistently
+optimize.
+
+Three practices build a cost-conscious culture. First, make costs
+visible. Every engineer should be able to see their daily agent spend in
+a dashboard. Not the team’s spend - their personal spend. When engineers
+see that their complex refactoring task cost \$8.50, they start thinking
+about whether a cheaper model could have handled it. Visibility drives
+optimization.
+
+Second, set budgets with consequences. A budget without consequences is
+a suggestion. A budget that triggers an alert when exceeded, and
+requires justification for overages, is a constraint. The justification
+doesn’t need to be onerous - "the task was more complex than expected"
+is fine. The point is to create a moment of reflection: was this cost
+justified?
+
+Third, celebrate cost optimization. When an engineer discovers that
+routing test generation to a cheaper model saves \$500/month with no
+quality loss, share that win with the team. When someone builds a
+context engineering pipeline that reduces token usage by 60%, recognize
+the contribution. Cost optimization is engineering work, and it should
+be valued as such.
+
+## LLM FinOps tooling
+Track costs like you track cloud infrastructure costs:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [What It Does], [Pricing],
+  [**Helicone**],
+  [LLM proxy with cost tracking, caching],
+  [Free tier, then usage-based],
+  [**Portkey**],
+  [AI gateway with budgets, rate limiting],
+  [Free tier available],
+  [**LangFuse**],
+  [Open-source LLM observability + cost],
+  [Self-hosted free, cloud paid],
+  [**Braintrust**],
+  [Eval + cost tracking in one platform],
+  [Usage-based],
+  [**Custom**],
+  [OpenTelemetry + your own dashboards],
+  [Engineering time],
+)
+]
+
+## Cost monitoring dashboard
+What to track on your agent cost dashboard.
+
+## The consumption pricing shift
+The industry is moving from SaaS subscriptions to consumption-based
+pricing for agent platforms (Moor Insights, January 2026). This shift
+has profound implications for how engineering teams budget, plan, and
+optimize their AI spending.
+
+**Per-action pricing** means you pay for what agents do, not for
+seats. A team of ten engineers that runs 200 agent tasks per day pays
+for 200 tasks, regardless of how many engineers initiated them. This
+aligns cost with value - you pay more when agents are doing more work -
+but it makes budgeting harder because usage is variable.
+
+**Token-based billing** is the most common model. You pay for the
+tokens consumed by your agent sessions - input tokens (what you send to
+the model) and output tokens (what the model generates). Output tokens
+typically cost 3-5x more than input tokens, which means verbose agents
+are expensive agents. Optimizing for concise output - shorter reasoning
+chains, more efficient tool call sequences - directly reduces cost.
+
+**Outcome-based pricing** is emerging but not yet mainstream. In
+this model, you pay per successful task completion rather than per token
+consumed. This aligns incentives perfectly - the platform is motivated
+to complete tasks efficiently - but it requires a clear definition of
+"successful completion" and a mechanism for resolving disputes.
+
+For budget planning, model your costs as a function of three variables:
+the number of agent tasks per day, the average tokens per task (which
+depends on task complexity and your context engineering), and the cost
+per token (which depends on your model mix). Track all three variables
+weekly and project monthly costs based on trends. Build in a 30% buffer
+for cost spikes - runaway agents, model price changes, and unexpected
+usage patterns.
+
+## The three levels of cost control
+Cost control operates at three levels, each catching different types of
+cost problems.
+
+**Session-level controls** prevent individual agent sessions from
+running away. Per-session cost limits automatically terminate sessions
+that exceed their budget. This catches the most common cost problem - an
+agent stuck in a retry loop or exploring an unproductive approach.
+Session-level controls are the first thing to implement because they
+prevent the most expensive failures.
+
+**Team-level controls** prevent teams from exceeding their monthly
+budget. Daily spend alerts notify the team lead when daily spending
+exceeds the expected rate. Weekly trend reports show whether spending is
+on track for the month. Model routing rules ensure that expensive models
+are used only when necessary. Team-level controls are the second thing
+to implement because they provide visibility into spending patterns.
+
+**Organization-level controls** prevent the organization from
+exceeding its total AI budget. Cross-team dashboards show spending by
+team, by model, and by task type. Quarterly budget reviews compare
+actual spending to projections and adjust allocations. Vendor
+negotiations are informed by actual usage data rather than estimates.
+Organization-level controls are the third thing to implement because
+they require data from team-level controls to be meaningful.
+
+## Step-by-step: Agent cost control in 30 minutes
++ **Add the `AgentModelRouter`** (above) to your agent wrapper -
+  route tasks to the cheapest capable model
++ **Set per-session cost limits** - default \$3 for routine tasks,
+  \$10 for complex tasks
++ **Enable the cost tracking dashboard** - use
+  `AgentMetricsCollector` (Chapter 25) to track daily spend
++ **Configure cascade routing** - try cheap models first, escalate
+  only if quality is insufficient
++ **Review weekly** - identify tasks where cheaper models could be
+  used, adjust routing rules
+
+**Checklist:** - \[ \] Model routing is configured (cheap models
+for simple tasks) - \[ \] Per-session cost limits are enforced - \[ \]
+Daily cost dashboard is accessible - \[ \] Weekly cost report is
+generated - \[ \] Cascade routing is configured for at least 3 task
+types
+
+**Related Concepts:** Token Economics (Chapter 15), Measuring
+Impact (Chapter 25), Enterprise Adoption (Chapter 27)

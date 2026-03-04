@@ -1,0 +1,260 @@
+---
+title: "Agent Governance & Compliance"
+chapter: 29
+part: 9
+partTitle: "Production Engineering"
+description: "The core problem - agents act autonomously. Unlike a chatbot that only generates text, an agent reads files, writes code, calls APIs, modifies databases, and interacts with externa"
+order: 129
+---
+
+## Why governance can’t be an afterthought
+In February 2026, UC Berkeley’s Center for Long-Term Cybersecurity
+published the
+["Agentic AI Risk-Management Standards Profile"](https://cltc.berkeley.edu/publication/agentic-ai-risk-management-standards-profile/)
+- the first formal framework for managing risks specific to agentic AI.
+The timing wasn’t accidental. Enterprises are deploying agents into
+production without governance frameworks, and the consequences are
+starting to show.
+
+The core problem: agents act autonomously. Unlike a chatbot that only
+generates text, an agent reads files, writes code, calls APIs, modifies
+databases, and interacts with external services. Every action is a
+potential compliance event. A chatbot that generates incorrect text is
+embarrassing. An agent that modifies a production database based on
+incorrect reasoning is a compliance violation, a potential data breach,
+and a legal liability.
+
+The governance challenge is compounded by the non-deterministic nature
+of agents. Traditional software governance relies on the principle that
+the same input produces the same output - you can audit the code, verify
+the logic, and certify the behavior. Agents don’t work that way. The
+same task description can produce different actions on different runs.
+This means governance frameworks need to shift from certifying behavior
+(impossible for non-deterministic systems) to certifying constraints
+(the boundaries within which the agent operates, regardless of its
+specific actions).
+
+The Berkeley framework identifies four risk categories specific to
+agentic AI: unauthorized actions (the agent does something it
+shouldn’t), cascading failures (one agent’s error propagates through a
+multi-agent system), opacity (inability to explain why the agent took a
+specific action), and emergent behavior (agents developing patterns that
+weren’t anticipated or intended). Each category requires specific
+governance controls.
+
+## The agent audit trail
+The audit trail is the foundation of agent governance. Without it, you
+can’t answer the most basic compliance questions: What did the agent do?
+When did it do it? Why did it do it? Who authorized it? What data did it
+access?
+
+An effective agent audit trail captures five categories of information.
+Actions - every tool call, file modification, API request, and command
+execution, with timestamps, arguments, and results. Decisions - the
+model’s reasoning at each step, including what alternatives it
+considered and why it chose the action it took. Authorization - every
+permission check, including what was allowed, what was denied, and what
+policy was applied. Data access - every piece of data the agent read or
+wrote, classified by sensitivity level. Cost - the token consumption and
+dollar cost of each action, accumulated per session.
+
+The audit trail must be immutable - once written, records cannot be
+modified or deleted (except through a formal retention policy). It must
+be searchable - you need to find all actions by a specific agent, all
+actions on a specific resource, or all actions during a specific time
+window. And it must be retained for a defined period - 90 days minimum
+for most use cases, longer for regulated industries.
+
+Every agent action should produce an immutable audit record.
+
+## Compliance frameworks applied to agents
+How existing compliance requirements map to agent systems:
+
+**SOC 2 Type II**
+
+#align(center)[#table(
+  columns: 2,
+  align: (col, row) => (auto,auto,).at(col),
+  inset: 6pt,
+  [SOC 2 Criteria], [Agent Requirement],
+  [**CC6.1** Access control],
+  [Fine-grained authorization per agent (OpenFGA/Zanzibar)],
+  [**CC6.3** Role-based access],
+  [Agent roles with least-privilege permissions],
+  [**CC7.2** System monitoring],
+  [Real-time agent trace monitoring and alerting],
+  [**CC8.1** Change management],
+  [Prompt versioning, eval gates before deployment],
+  [**PI1.1** Data privacy],
+  [PII detection/redaction in agent context],
+)
+]
+
+**GDPR**
+
+#align(center)[#table(
+  columns: 2,
+  align: (col, row) => (auto,auto,).at(col),
+  inset: 6pt,
+  [GDPR Article], [Agent Requirement],
+  [**Art. 5** Data minimization],
+  [Agents should access only necessary data],
+  [**Art. 13** Right to information],
+  [Users must know when an agent processes their data],
+  [**Art. 17** Right to erasure],
+  [Agent memory/logs containing personal data must be deletable],
+  [**Art. 22** Automated decision-making],
+  [Users can request human review of agent decisions],
+  [**Art. 35** Impact assessment],
+  [DPIA required for high-risk agent deployments],
+)
+]
+
+**[EU AI Act**
+(effective 2026)](https://artificialintelligenceact.eu)
+
+The EU AI Act classifies AI systems by risk level. Most enterprise
+agents fall into "limited risk" or "high risk":
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Risk Level], [Agent Examples], [Requirements],
+  [**Minimal**],
+  [Code formatting, linting],
+  [None],
+  [**Limited**],
+  [Code review, documentation],
+  [Transparency: users must know it’s AI],
+  [**High**],
+  [HR screening, financial decisions],
+  [Conformity assessment, human oversight, logging],
+  [**Unacceptable**],
+  [Social scoring, manipulation],
+  [Prohibited],
+)
+]
+
+## PII detection and redaction
+Agents process text that may contain personal data - names, email
+addresses, phone numbers, social security numbers, credit card numbers,
+and other personally identifiable information. This data can appear in
+source code (hardcoded test data), in database query results, in log
+files, in documentation, and in user-generated content that agents
+process.
+
+PII detection and redaction must be built into the agent pipeline at two
+points. First, before data enters the agent’s context - scan all
+retrieved content for PII patterns and redact or mask them before
+they’re included in the prompt. Second, before the agent’s output leaves
+the system - scan all agent-generated content for PII that might have
+leaked through the redaction or been hallucinated by the model.
+
+The detection approach depends on the type of PII. Structured PII (email
+addresses, phone numbers, credit card numbers, social security numbers)
+can be detected with regular expressions - fast, deterministic, and
+reliable. Unstructured PII (names, addresses, medical conditions)
+requires NLP-based detection - slower, probabilistic, and less reliable.
+For most engineering use cases, regex-based detection of structured PII
+is sufficient. Add NLP-based detection only if your agents process
+customer-facing content.
+
+The redaction approach depends on whether the agent needs the data to do
+its job. If the agent is reviewing code that contains test data with
+real email addresses, the email addresses can be replaced with synthetic
+ones (test\.com) without affecting the agent’s ability to review
+the code. If the agent is analyzing a customer support ticket that
+contains the customer’s name, the name might be necessary for the
+analysis - in which case, the data should be processed in a secure
+environment with appropriate access controls rather than redacted.
+
+Build redaction into the pipeline.
+
+## Agent action policies
+Agent action policies define what agents can and cannot do using
+declarative rules. Unlike authorization (which controls access to
+resources), action policies control the types of actions an agent can
+take regardless of what resources it has access to.
+
+A well-designed action policy covers five categories. **Allowed
+actions** list the specific action types the agent can perform - read
+files, write files, run tests, create PRs. **Prohibited actions**
+list the action types that are never allowed - delete databases, modify
+infrastructure, access production secrets. **Conditional actions**
+list actions that are allowed only under specific conditions - deploy to
+staging only during business hours, access production logs only during
+an active incident. **Rate-limited actions** list actions with
+frequency constraints - no more than 100 API calls per session, no more
+than 10 file modifications per minute. **Approval-required
+actions** list actions that need human approval before execution - merge
+PRs, deploy to production, modify security configurations.
+
+The policy should be expressed in a machine-readable format (YAML, JSON,
+or a policy language like Rego) so it can be enforced programmatically.
+A policy that exists only in documentation is a policy that will be
+violated.
+
+Define what agents can and cannot do using declarative policies.
+
+## Compliance frameworks for agent systems
+Regulated industries - finance, healthcare, government, defense - have
+specific compliance requirements that affect agent deployments.
+Understanding these requirements early prevents costly rework later.
+
+**SOC 2** requires demonstrating that your systems have appropriate
+controls for security, availability, processing integrity,
+confidentiality, and privacy. For agent systems, this means documenting
+your authorization model, your audit trail, your incident response
+procedures, and your data handling practices. The audit trail is
+particularly important - SOC 2 auditors will want to see that every
+agent action is logged, that logs are immutable, and that access to logs
+is controlled.
+
+**GDPR and data protection** requires that personal data is
+processed lawfully, that data subjects can exercise their rights
+(access, deletion, portability), and that data processing is documented.
+For agent systems, this means ensuring that agents don’t process
+personal data without a legal basis, that PII is detected and redacted
+before it enters the model’s context, and that data processing
+activities are documented in your Records of Processing Activities.
+
+**HIPAA** (for healthcare) requires that protected health
+information is handled with appropriate safeguards. For agent systems,
+this means that agents processing PHI must run in HIPAA-compliant
+environments, that PHI is encrypted at rest and in transit, and that
+access to PHI is logged and auditable. Most cloud-based model providers
+offer HIPAA-compliant configurations, but you need to verify this and
+sign a Business Associate Agreement.
+
+**Financial services regulations** (SOX, PCI-DSS, FINRA) require
+specific controls around data handling, audit trails, and access
+management. For agent systems, the key requirement is demonstrating that
+agent actions are auditable, that agents can’t access systems they
+shouldn’t, and that there’s a clear chain of accountability from agent
+action to human authorization.
+
+The common thread across all compliance frameworks is auditability. If
+you can demonstrate that every agent action is logged, that access is
+controlled, and that there’s a clear chain of accountability, you’re
+well-positioned for most compliance requirements.
+
+## The governance Checklist
+Before deploying an agent to production:
+
+- ☐ Agent has a defined scope and permission boundary
+- ☐ Audit logging captures all agent actions
+- ☐ PII detection/redaction is in the pipeline
+- ☐ Data classification is applied to all accessed resources
+- ☐ Human escalation paths are defined for high-risk actions
+- ☐ Token/cost budgets are enforced
+- ☐ Agent outputs are reviewed before external actions (email, API
+  calls)
+- ☐ Retention policies are defined for agent logs
+- ☐ Incident response plan includes agent-specific scenarios
+- ☐ Compliance mapping is documented (SOC 2, GDPR, etc.)
+- ☐ Regular access reviews include agent permissions
+- ☐ Kill switch exists to disable the agent immediately
+
+**Related Concepts:** Security Crisis (Chapter 7), Zanzibar
+(Chapter 8), Sandboxing (Chapter 10), Security Checklist (Chapter 24)

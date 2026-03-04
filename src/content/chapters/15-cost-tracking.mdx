@@ -1,0 +1,191 @@
+---
+title: "Cost Tracking & Token Economics"
+chapter: 15
+part: 5
+partTitle: "Observability & Operations"
+description: "Without cost tracking, a single runaway agent can cost more than a month of normal usage."
+order: 115
+---
+
+## Why cost tracking matters
+AI agents consume tokens. Tokens cost money. And unlike traditional
+infrastructure costs, which are relatively predictable (you know how
+many servers you’re running), agent costs are driven by model behavior,
+which is non-deterministic. The same task might cost \$0.50 one day and
+\$3.00 the next, depending on how many tool calls the agent makes, how
+much context it accumulates, and whether it gets stuck in a retry loop.
+Without tracking, costs spiral:
+
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Scenario], [Tokens], [Cost], [Time],
+  [Simple bug fix],
+  [15K],
+  [\$0.05],
+  [2 min],
+  [Feature implementation],
+  [150K],
+  [\$0.45],
+  [15 min],
+  [Complex refactoring],
+  [500K],
+  [\$1.50],
+  [45 min],
+  [Runaway agent (no limits)],
+  [5M+],
+  [\$15+],
+  [Hours],
+  [Team of 10 engineers × 20 tasks/day],
+  [30M/day],
+  [\$90/day],
+  [-],
+  [**Monthly team cost**],
+  [**~900M**],
+  [**~\$2,700/month**],
+  [-],
+)
+]
+
+Without cost tracking, a single runaway agent can cost more than a month
+of normal usage.
+
+## Token usage attribution
+Token usage attribution answers the question: where is the money going?
+You need to track usage at multiple levels - per model call, per tool
+call, per agent session, per engineer, per team, and per task type.
+Without attribution, you know your monthly bill but not what’s driving
+it.
+
+The most common surprise in token attribution is context accumulation. A
+20-turn agent session doesn’t consume 20x the tokens of a single turn -
+it consumes much more, because each turn includes the full conversation
+history. Turn 1 sends 5K tokens. Turn 2 sends 10K. Turn 3 sends 18K. By
+turn 20, you might be sending 200K tokens per turn. The total token
+consumption for the session is the sum of all turns, which grows
+quadratically. This is why context management (summarizing earlier
+turns, dropping irrelevant tool results) is a cost optimization, not
+just a quality optimization.
+
+The second surprise is tool definition overhead. If your agent has
+access to 60 MCP tools, the tool definitions alone might consume 15-20K
+tokens per turn. Over a 20-turn session, that’s 300-400K tokens spent
+just on tool definitions - tokens that don’t contribute to the task at
+all. Meta-MCP patterns (Chapter 5) can reduce this by 88%.
+
+## Cost optimization strategies
+### Strategy 1: Model routing
+Use the cheapest model that can handle the task. Not every task needs a
+frontier model. A simple bug fix, a test generation task, or a
+documentation update can be handled by Sonnet 4.6 at \$3/\$15 per
+million tokens instead of Opus 4.6 at \$5/\$25. A task that requires
+deep reasoning about architecture or complex multi-file refactoring
+justifies the frontier model. The key is having a routing layer that
+makes this decision automatically based on task characteristics.
+
+### Strategy 2: Context engineering (chapters 4-6)
+Reducing context size directly reduces cost. This is the
+highest-leverage cost optimization because it reduces tokens on every
+turn of every session:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Optimization], [Token Reduction], [Cost Reduction],
+  [Distill (deduplication)],
+  [30-40%],
+  [30-40%],
+  [Meta-MCP (tool compression)],
+  [88% of tool tokens],
+  [10-15% overall],
+  [Selective context loading],
+  [50-70%],
+  [50-70%],
+  [**Combined**],
+  [**60-80%**],
+  [**60-80%**],
+)
+]
+
+### Strategy 3: Budget caps
+Set hard limits at every level:
+
+```yaml
+# Cost policy
+budgets:
+  per_session:
+
+  per_engineer_daily:
+
+  per_team_monthly:
+
+  actions_on_limit:
+```
+
+## Cost dashboard
+A cost dashboard should answer five questions at a glance: How much are
+we spending today? Is spending trending up or down? Which models are
+consuming the most tokens? Which task types are the most expensive? Are
+any sessions exceeding their budgets? Key metrics for an agent cost
+dashboard.
+
+## The hidden costs of agent systems
+Beyond the obvious token costs, agent systems have hidden costs that
+teams often discover too late.
+
+**Retry costs** are the most common hidden cost. When a tool call
+fails, the agent retries - but the retry includes the full conversation
+history plus the failed attempt, which means the retry is more expensive
+than the original call. A task that fails three times before succeeding
+can cost 4-5x the cost of a task that succeeds on the first try.
+Monitoring retry rates and fixing the root causes of failures (bad tool
+schemas, unreliable APIs, ambiguous instructions) is a cost
+optimization.
+
+**Context accumulation costs** grow quadratically with session
+length. Each turn in the conversation includes the full history of
+previous turns. Turn 1 sends 5K tokens. Turn 10 sends 50K tokens. Turn
+20 sends 100K tokens. The total cost of a 20-turn session isn’t 20 × 5K
+\= 100K tokens - it’s the sum of the series: 5K + 10K + 15K + … + 100K
+\= 1,050K tokens. Context management (summarizing earlier turns,
+dropping irrelevant tool results) can reduce this by 50-70%.
+
+**Orchestration overhead** in multi-agent systems adds 10-20% to
+the total cost. The orchestrator agent consumes tokens to plan,
+delegate, and synthesize - tokens that don’t directly contribute to the
+task. This overhead is unavoidable but should be monitored and
+minimized.
+
+**Eval pipeline costs** are often overlooked. Running evals on
+every prompt change consumes tokens - potentially thousands of dollars
+per month for teams with frequent prompt iterations. Budget for eval
+costs separately and optimize by running lightweight evals on every
+change and comprehensive evals on a schedule.
+
+## Step-by-step: Setting up cost tracking in 30 minutes
++ **Add a cost tracking middleware** to your agent wrapper - every
+  LLM call goes through it, logging model, input/output tokens, and
+  calculated cost
++ **Log every call** with model, input/output tokens, and
+  calculated cost to your observability backend
++ **Set per-session budget caps** - kill the agent if cost exceeds
+  the limit (default: \$3 for routine tasks, \$10 for complex tasks)
++ **Create a daily cost dashboard** - total spend, cost by model,
+  cost by task type, cost by engineer
++ **Set up weekly cost alerts** - notify if weekly spend exceeds
+  120% of the previous week
++ **Review monthly** - identify tasks where cheaper models could be
+  used, investigate cost spikes, adjust routing rules
+
+**Checklist:** - \[ \] Every LLM call logs token count and cost -
+\[ \] Per-session cost limits are enforced (default: \$3) - \[ \] Daily
+cost dashboard is accessible to the team - \[ \] Weekly cost report is
+generated automatically - \[ \] Model routing is configured (cheap
+models for simple tasks) - \[ \] Retry rates are monitored and root
+causes are addressed - \[ \] Context accumulation is managed
+(summarization, pruning)
+
+**Related Concepts:** Token Budget (4.3), Model Routing (15.3)
+**Related Practices:** Agent Cost Management (Chapter 24)

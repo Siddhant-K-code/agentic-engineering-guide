@@ -1,0 +1,224 @@
+---
+title: "The Agentic AI Foundation & Standards"
+chapter: 3
+part: 1
+partTitle: "Foundations"
+description: "The emergence of industry standards for agent infrastructure marks a turning point in the maturity of the field. Standards reduce fragmentation, enable interoperability, and give t"
+order: 103
+---
+
+The emergence of industry standards for agent infrastructure marks a
+turning point in the maturity of the field. Standards reduce
+fragmentation, enable interoperability, and give teams confidence that
+their infrastructure investments won’t be stranded by ecosystem changes.
+This chapter covers the three foundational standards - MCP, Goose, and
+AGENTS.md - and the gaps that remain.
+
+## What is AAIF?
+On December 9, 2025, Anthropic, OpenAI, and Block announced the
+[Agentic AI Foundation (AAIF)](https://www.linuxfoundation.org/press/linux-foundation-launches-agentic-ai-initiative)
+under the Linux Foundation, with support from Google, Microsoft, AWS,
+Cloudflare, and Bloomberg.
+
+These companies compete fiercely on models. Yet they’re collaborating on
+infrastructure standards. This is the same pattern that produced Linux
+(standardized operating systems), Kubernetes (standardized container
+orchestration), and OpenTelemetry (standardized observability). In each
+case, competing vendors realized that standardizing the infrastructure
+layer accelerated adoption for everyone, while differentiation happened
+at higher layers.
+
+AAIF aims to standardize the agent infrastructure layer. The timing is
+significant - it came just weeks after the capability jump, when it
+became clear that agents were moving from experimental to production.
+Without standards, every team building agent infrastructure was making
+incompatible choices. With standards, the ecosystem can build on shared
+foundations.
+
+## The three founding projects
+### Model context protocol (MCP)
+Donated by Anthropic, [MCP](https://modelcontextprotocol.io) is a
+universal protocol for connecting AI agents to external systems. It
+defines a standard way for agents to discover, authenticate with, and
+use tools - databases, APIs, file systems, code repositories, anything
+an agent might need to interact with.
+
+MCP is becoming the USB-C of AI agents. Build an MCP server once, and it
+works with any MCP-compatible agent - Claude, ChatGPT, Cursor, Gemini,
+VS Code, Copilot. Before MCP, every agent framework had its own tool
+integration format. If you wanted your database tool to work with three
+different agents, you wrote three different integrations. MCP eliminates
+that duplication.
+
+The adoption numbers are striking: over 10,000 active public MCP
+servers, 97 million monthly SDK downloads across npm and PyPI, and
+adoption by every major AI platform. MCP has achieved the kind of rapid
+standardization that usually takes years - it went from announcement to
+universal adoption in under twelve months.
+
+But MCP’s rapid adoption has also exposed its gaps. The protocol defines
+how agents discover and call tools, but it doesn’t define how agents
+authenticate, how permissions are scoped, or how tool calls are audited.
+Security researchers have found over 8,000 publicly visible MCP servers,
+many with no authentication at all. The protocol is covered in depth in
+Chapter 11, including the security implications.
+
+### Goose
+Donated by Block (formerly Square),
+[Goose](https://github.com/block/goose) is an open-source,
+extensible AI agent designed for production use. It’s MCP-native,
+observable, and controllable - a reference implementation of what a
+well-architected agent looks like.
+
+Goose matters less as a product and more as an architectural template.
+It demonstrates patterns that production agents need: structured tool
+registration, session management, cost tracking, and kill switches.
+Teams building custom agents should study Goose’s architecture even if
+they don’t use it directly. The patterns it implements - particularly
+around observability and control - are the patterns every production
+agent needs.
+
+### AGENTS.md
+Donated by OpenAI,
+[AGENTS.md](https://github.com/agentsmd/agents.md) is a standard
+format for AI coding agent instructions. It’s a markdown file that tells
+AI agents how to work with your project - what the project structure
+looks like, what conventions to follow, what commands to run, what
+patterns to use.
+
+Think of it as README.md for AI agents. A README tells a human developer
+how to get started. An AGENTS.md tells an AI agent how to get started.
+The difference is that AGENTS.md is optimized for machine consumption -
+it’s structured, specific, and focused on the information agents need to
+produce correct output.
+
+Over 60,000 open-source projects now have AGENTS.md files. The projects
+that adopted AGENTS.md early report measurably better agent output -
+fewer style violations, fewer incorrect assumptions about project
+structure, and fewer failed builds. If you maintain open-source
+projects, add one today. It takes ten minutes and immediately improves
+the experience for every developer using an AI agent with your code.
+AGENTS.md is covered in detail in Chapter 13.
+
+## What’s missing from AAIF
+AAIF is a foundation, not a complete solution. Three significant gaps
+remain, and they represent the most important unsolved problems in agent
+infrastructure.
+
+The first gap is security standards. MCP defines how agents call tools
+but not how they authenticate or how permissions are scoped. Each
+implementation rolls its own authentication, which means each
+implementation has its own security vulnerabilities. The industry needs
+a standard for agent authentication that covers identity, delegation,
+and credential management.
+
+The second gap is authorization models. Agents need fine-grained,
+context-dependent permissions that traditional RBAC can’t express. An
+agent should be able to read source code but not production secrets. It
+should be able to create pull requests but not merge them. It should be
+able to access staging databases but not production databases. Google’s
+Zanzibar model, adapted for agents through systems like OpenFGA, is the
+most promising approach, but there’s no standard yet. This is covered in
+Chapter 8.
+
+The third gap is observability standards. OpenTelemetry is extending to
+cover agent workflows, but the semantic conventions for agent traces are
+still being defined. What does a span look like for a model inference
+call? How do you represent a tool call chain? How do you correlate agent
+actions with their downstream effects? These questions don’t have
+standard answers yet, which means every team building agent
+observability is inventing its own schema.
+
+These gaps are where the most important engineering work is happening
+right now. Teams that solve them well gain a significant operational
+advantage. This guide covers all three.
+
+## The standards landscape
+Beyond AAIF, several standards and protocols are shaping the agent
+ecosystem. MCP handles tool integration - how agents discover and use
+external systems. Google’s Agent-to-Agent protocol (A2A) handles agent
+communication - how agents discover, negotiate with, and delegate to
+other agents. OpenFGA (based on Google’s Zanzibar) handles authorization
+- how permissions are defined, evaluated, and delegated. OpenTelemetry
+handles observability - how agent actions are traced, measured, and
+logged.
+
+The convergence of these standards is significant. For the first time,
+it’s possible to build an agent system where tool integration, agent
+communication, authorization, and observability all use open standards.
+Teams that align with these standards now will avoid painful migrations
+later. Teams that build on proprietary alternatives will find themselves
+locked in as the ecosystem standardizes.
+
+The key strategic decision is how much to invest in standards compliance
+today versus waiting for standards to mature. The answer depends on your
+timeline. If you’re deploying agents to production in the next three
+months, use the standards where they’re mature (MCP, AGENTS.md) and
+build lightweight abstractions where they’re not (authorization,
+observability). If you’re building agent infrastructure for the next two
+years, invest heavily in standards compliance - the migration cost of
+non-standard infrastructure compounds over time.
+
+## The open source agent infrastructure stack
+Beyond the AAIF projects, a rich ecosystem of open-source tools has
+emerged to support agent infrastructure. Understanding this ecosystem
+helps you make build-versus-buy decisions and avoid reinventing
+solutions that already exist.
+
+**For model abstraction:**
+[LiteLLM](https://github.com/BerriAI/litellm) provides a unified
+API for 100+ LLM providers, letting you switch models without changing
+code. [OpenRouter](https://openrouter.ai) provides an API gateway
+with automatic model routing and fallback. Both are essential for
+avoiding model provider lock-in.
+
+**For authorization:** [OpenFGA](https://openfga.dev) (CNCF
+Incubating) provides Zanzibar-style relationship-based access control.
+[OPA](https://www.openpolicyagent.org) (CNCF Graduated) provides
+general-purpose policy evaluation. Together, they cover the full
+spectrum of agent authorization needs.
+
+**For observability:**
+[OpenTelemetry](https://opentelemetry.io) (CNCF Graduated)
+provides the instrumentation standard.
+[Langfuse](https://langfuse.com) provides AI-specific
+observability with prompt tracking, cost attribution, and eval
+integration. [Arize Phoenix](https://github.com/Arize-ai/phoenix)
+provides trace-based evaluation and debugging.
+
+**For sandboxing:** Anthropic’s
+[sandbox-runtime](https://github.com/anthropic-experimental/sandbox-runtime)
+provides agent-specific sandboxing. [gVisor](https://gvisor.dev)
+provides application-level kernel isolation.
+[Bubblewrap](https://github.com/containers/bubblewrap) provides
+unprivileged sandboxing for Linux.
+
+**For evaluation:**
+[Promptfoo](https://github.com/promptfoo/promptfoo) provides
+open-source, config-driven eval for prompts and agents.
+[Braintrust](https://www.braintrust.dev) provides experiment
+tracking and scoring.
+[DeepEval](https://github.com/confident-ai/deepeval) provides
+Python-native evaluation metrics.
+
+**For context engineering:**
+[Distill](https://github.com/Siddhant-K-code/distill) provides
+context deduplication and compression.
+[Chroma](https://github.com/chroma-core/chroma),
+[Qdrant](https://github.com/qdrant/qdrant), and
+[Weaviate](https://github.com/weaviate/weaviate) provide vector
+databases for embedding-based retrieval.
+
+The stack is maturing rapidly. Most of these tools didn’t exist two
+years ago. By the time you read this, new tools will have emerged and
+some of these will have been superseded. The principles - abstraction,
+authorization, observability, sandboxing, evaluation, context
+engineering - are stable even as the specific tools change.
+
+
+> *"You cannot prompt your way out of garbage context."*
+> 
+
+Context engineering is the most impactful discipline in the agent stack.
+The model you choose matters. The prompt you write matters. But what you
+put in the context window matters more than both combined.

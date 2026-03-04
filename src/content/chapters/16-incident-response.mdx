@@ -1,0 +1,154 @@
+---
+title: "Incident Response for Agent Failures"
+chapter: 16
+part: 5
+partTitle: "Observability & Operations"
+description: "Application failures are localized. A bug in your payment service doesn’t corrupt your user database. Agent failures cascade. An agent that misunderstands a task might modify twelv"
+order: 116
+---
+
+## When agents break things
+Agent failures are fundamentally different from application failures,
+and teams that treat them the same way get burned. Application bugs are
+deterministic - the same input produces the same error, you find the
+line, you fix it. Agent failures are non-deterministic. The same prompt
+can produce different behavior on different runs because the model’s
+output varies with temperature, context window contents, and even
+API-side changes you don’t control.
+
+Application failures are localized. A bug in your payment service
+doesn’t corrupt your user database. Agent failures cascade. An agent
+that misunderstands a task might modify twelve files across three
+services before anyone notices. Application failures are immediate - you
+get an error on the request. Agent failures are delayed - the agent made
+changes that look correct at first glance but introduce subtle bugs that
+surface days later. And while you can roll back a deployment, you can’t
+always undo what an agent did, especially if it made API calls, sent
+messages, or modified external state.
+
+## Incident taxonomy
+Not all agent failures are equal, and your response should match the
+severity. A severity-one incident means the agent took an action that
+affected production systems, corrupted data, or exposed sensitive
+information. This requires immediate human response - stop the agent,
+assess the blast radius, and begin remediation within minutes. A
+severity-two incident means the agent produced incorrect output that
+passed automated checks but was caught in human review. This requires
+investigation within an hour to understand why the automated checks
+missed it and whether similar issues exist in previously accepted work.
+A severity-three incident means the agent failed to complete a task or
+produced obviously wrong output that was caught immediately. This is a
+learning opportunity, not an emergency.
+
+## The incident response runbook
+When an agent incident occurs, follow four steps. First, contain: kill
+the agent session immediately, revoke any temporary credentials it was
+using, and prevent the affected code from being deployed. Second,
+assess: review the agent’s full trace log to understand every action it
+took, identify all files modified and commands executed, and determine
+whether any actions affected external systems. Third, remediate: revert
+the agent’s changes using git, restore any modified external state, and
+verify the system is back to a known good state. Fourth, learn: conduct
+a post-incident review within 48 hours, update your guardrails to
+prevent recurrence, and share findings with the team.
+
+## Kill switches and automated detection
+Every agent deployment needs a kill switch - a mechanism to immediately
+terminate an agent session when it exhibits anomalous behavior. The kill
+switch should trigger on three conditions: the agent exceeds its cost
+budget for the session, the agent attempts an action outside its
+permission scope, or the agent enters a loop (making the same tool call
+more than three times without progress).
+
+Automated detection goes beyond the kill switch. Monitor for patterns
+that indicate an agent is going off track: rapidly increasing context
+window usage (the agent is confused and accumulating irrelevant
+context), repeated failed tool calls (the agent is guessing rather than
+reasoning), and modifications to files outside the expected scope (the
+agent misunderstood the task boundaries). When detection fires, alert
+the on-call engineer and pause the agent - don’t kill it immediately,
+because the trace log of a paused agent is more useful for diagnosis
+than a terminated one.
+
+## Post-Incident reviews
+Every severity-one incident gets a written post-incident review within
+48 hours. The review answers five questions: What did the agent do? Why
+did it do it (what in the prompt or context led to this behavior)? Why
+didn’t our guardrails catch it? What is the blast radius (what was
+affected and has it been fully remediated)? What specific guardrail
+changes will prevent recurrence?
+
+The most important output of the review is the guardrail update. If an
+agent deleted a production database because it had write access it
+didn’t need, the fix isn’t "tell the agent not to delete databases" -
+it’s revoking write access to production databases from all agent
+permission levels. Every incident should result in a structural change,
+not a prompt change.
+
+## Building an agent incident response team
+For organizations with significant agent deployments (more than 50 agent
+tasks per day), a dedicated incident response capability is worth the
+investment. This doesn’t mean a full-time team - it means designated
+responders who understand agent systems and can investigate incidents
+quickly.
+
+The agent incident responder needs three skills that traditional
+incident responders may not have. First, they need to read agent traces
+- understanding the sequence of model calls, tool calls, and decisions
+that led to the incident. This is different from reading application
+logs because agent traces include reasoning chains, not just actions.
+Second, they need to understand prompt dynamics - why a particular
+prompt produced a particular behavior, and how to modify the prompt or
+context to prevent recurrence. Third, they need to understand the
+authorization model - what permissions the agent had, whether those
+permissions were appropriate, and how to adjust them.
+
+The incident response process should be documented in a runbook that’s
+accessible to all on-call engineers. The runbook should include
+step-by-step instructions for each severity level, contact information
+for the agent infrastructure team, instructions for accessing agent
+traces and session replays, and templates for post-incident reviews. The
+runbook should be tested quarterly - run a tabletop exercise where the
+team walks through a simulated agent incident and identifies gaps in the
+process.
+
+## Common agent failure patterns
+After analyzing hundreds of agent incidents across multiple
+organizations, several patterns emerge repeatedly.
+
+**The infinite loop** is the most common failure. The agent
+encounters an error, attempts to fix it, introduces a new error,
+attempts to fix that, and cycles indefinitely. The fix is a loop
+detector that counts consecutive failed attempts and terminates after a
+threshold (typically three).
+
+**The scope creep** occurs when the agent misunderstands the task
+boundaries and modifies files or systems outside the intended scope. An
+agent asked to "fix the login bug" might refactor the entire
+authentication system. The fix is explicit scope constraints in the task
+specification - "modify only files in src/auth/login.ts and
+tests/auth/login.test.ts."
+
+**The confident hallucination** is the most dangerous failure. The
+agent produces output that looks correct - it compiles, passes tests,
+follows conventions - but contains a subtle logical error. The fix is
+adversarial testing in the eval pipeline - test cases specifically
+designed to catch the kinds of errors agents make (off-by-one errors,
+incorrect boundary conditions, missing edge cases).
+
+**The cost spiral** occurs when the agent encounters a difficult
+problem and keeps trying increasingly expensive approaches. Each retry
+adds to the context window, which increases the cost of subsequent
+retries. The fix is per-session cost limits with automatic termination.
+
+**Related Concepts:** Agent Traces (14.1), Security (Chapter 7-10)
+**Related Practices:** Incident Response Plan (Chapter 24),
+Backpressure (Chapter 32)
+
+
+> *"Agent orchestration is distributed systems engineering applied to
+> AI."*
+> 
+
+How agents plan, execute, coordinate, and recover from failures. This is
+where software engineering discipline meets AI capability.

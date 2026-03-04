@@ -1,0 +1,101 @@
+---
+title: "Your First Agent in Production"
+chapter: 23
+part: 8
+partTitle: "Production Workflows"
+description: "Before deploying any agent to production, verify."
+order: 123
+---
+
+## Pre-Flight Checklist
+Deploying your first agent to production is a milestone that most teams
+overthink or underthink. The overthinking camp spends months building
+infrastructure before running a single agent task. The underthinking
+camp gives an agent full access to their codebase on day one with no
+guardrails. Both approaches fail. The right approach is a controlled
+first deployment with clear boundaries, monitoring, and a plan for
+iteration.
+
+Before deploying any agent to production, verify.
+
+## Workflow: Setting up your first production agent
+**Estimated time:** 2-4 hours **Prerequisites:** Git
+repository, CI/CD pipeline, monitoring infrastructure
+
+### Step 1: Prepare the repository (30 minutes)
+Create an `AGENTS.md` with your project overview, setup commands, code
+conventions, testing requirements, and security notes (see Section 13.2
+for the full template).
+
+Then create the agent configuration:
+
+```yaml
+# .agent/config.yaml
+agent:
+  model: claude-sonnet-4.6
+  max_tokens_per_session: 200000
+  max_cost_per_session: 3.00
+  timeout_minutes: 30
+
+permissions:
+  filesystem:
+  network:
+  commands:
+
+observability:
+  tracing: true
+  cost_tracking: true
+  audit_logging: true
+```
+
+### Step 2: Configure MCP servers (30 minutes)
+### Step 3: Set up observability (45 minutes)
+### Step 4: Configure CI/CD integration (30 minutes)
+### Step 5: First run (30 minutes)
+### Step 6: Monitor and iterate (ongoing)
+After the first successful run: 1. Review the agent trace in your
+observability dashboard 2. Check cost and token usage 3. Identify any
+context gaps (update AGENTS.md) 4. Gradually expand to more complex
+tasks
+
+## Workflow: Setting up Distill for monorepo context
+**Estimated time:** 30 minutes
+
+Monorepos present a unique context challenge. A typical monorepo has
+hundreds of packages, thousands of files, and millions of lines of code.
+No agent can process all of it. Distill solves this by building a
+compressed, deduplicated context index that agents can query for
+relevant information without loading the entire codebase.
+
+The setup process is straightforward: install Distill, point it at your
+monorepo root, configure which directories to index (source code,
+documentation, ADRs) and which to skip (node\_modules, build artifacts,
+generated code), and run the initial indexing. The index builds in
+minutes for most monorepos and updates incrementally as files change.
+
+Once indexed, Distill exposes an MCP server that agents can query.
+Instead of loading entire files, agents ask Distill for the relevant
+context - "show me how error handling works in the payments service" -
+and receive a curated, deduplicated response that fits within their
+token budget.
+
+## Workflow: Implementing agent authorization with OpenFGA
+**Estimated time:** 3-4 hours
+
+Agent authorization with OpenFGA follows three steps. First, define your
+authorization model - the types (agent, repository, file, tool), the
+relationships (can\_read, can\_write, can\_execute), and the rules (an
+agent that can\_read a repository can\_read all files in that
+repository). Second, populate the relationship tuples - which agents
+have which relationships to which resources. Third, integrate permission
+checks into your agent framework - before every tool call, check whether
+the agent has the required permission.
+
+The most common mistake is making the authorization model too granular.
+You don’t need per-file permissions on day one. Start with
+per-repository permissions (this agent can access this repository) and
+per-tool-category permissions (this agent can use filesystem tools but
+not database tools). Add granularity as your needs become clear.
+
+**Related Concepts:** All previous chapters **Related
+Practices:** Security Checklist (Chapter 24)

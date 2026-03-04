@@ -1,0 +1,195 @@
+---
+title: "Structured Outputs & Function Calling"
+chapter: 30
+part: 9
+partTitle: "Production Engineering"
+description: "The reliability problem is more subtle than it appears. A model that produces valid JSON 95% of the time sounds reliable - until you realize that in a 20-step agent session, the pr"
+order: 130
+---
+
+## The reliability problem
+Agents need to produce structured data - JSON for tool calls, typed
+parameters for function invocations, formatted responses for downstream
+systems. Free-form text generation doesn’t cut it. When an agent calls a
+tool, the tool expects specific parameters in a specific format. When an
+agent produces output for a downstream system, that system expects
+structured data it can parse programmatically. A missing field, a wrong
+type, or an invalid enum value causes a failure that the agent may or
+may not recover from.
+
+The reliability problem is more subtle than it appears. A model that
+produces valid JSON 95% of the time sounds reliable - until you realize
+that in a 20-step agent session, the probability of at least one invalid
+output is 1 - 0.95^20 \= 64%. At 99% reliability, a 20-step session
+still has an 18% chance of failure. You need 99.9% or better for
+production agent systems, and achieving that requires more than just
+asking the model nicely.
+
+The reliability spectrum ranges from unstructured text (0% schema
+compliance guarantee) through JSON mode (valid JSON but no schema
+guarantee) through function calling (high compliance but not guaranteed)
+through structured outputs with strict mode (near-perfect compliance) to
+constrained decoding (100% guarantee by construction). Each level trades
+flexibility for reliability.
+
+## The four approaches
+**Approach 1: JSON Mode**
+
+The simplest. Tell the model to output JSON.
+
+```python
+# OpenAI JSON mode
+response = client.chat.completions.create(
+)
+# Returns valid JSON, but no schema enforcement
+# Could return {"name": "John", "age": 30} or {"person": "John", "years": 30}
+```
+
+Limitation: guarantees valid JSON but not a specific schema.
+
+**Approach 2: Function/Tool Calling**
+
+Define a schema, model fills it in:
+
+**Approach 3: Structured Outputs (strict mode)**
+
+OpenAI’s strict mode guarantees schema compliance:
+
+**Approach 4: Constrained Decoding**
+
+For open-source models, constrain the token generation at the decoding
+level. Libraries like Outlines and Guidance modify the model’s sampling
+process to guarantee schema compliance. This is 100% reliable by
+construction - the model literally cannot produce invalid output because
+invalid tokens are masked during generation.
+
+The trade-offs are significant. First, it requires access to the model’s
+logits, which is not available through most cloud APIs - you need to
+self-host the model or use a provider that exposes logits (vLLM,
+SGLang). Second, it can reduce output quality by constraining the
+model’s expressiveness - the model might produce a valid but suboptimal
+output because the optimal output would have required tokens that were
+masked.
+
+Constrained decoding is the right choice when schema compliance is more
+important than output quality - for example, when generating structured
+data for a downstream system that will crash on invalid input. It’s the
+wrong choice when output quality is paramount - for example, when
+generating code or natural language where the model needs full
+expressiveness.
+
+## When to use what
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Approach], [Best For], [Provider Support], [Reliability],
+  [**JSON mode**],
+  [Simple extraction, flexible schemas],
+  [All major providers],
+  [~95%],
+  [**Function calling**],
+  [Tool use, agent actions],
+  [OpenAI, Anthropic, Google],
+  [~98%],
+  [**Structured outputs**],
+  [Strict schema compliance],
+  [OpenAI (strict mode)],
+  [~99.9%],
+  [**Constrained decoding**],
+  [Open-source models, 100% guarantee],
+  [Outlines, vLLM, SGLang],
+  [100%],
+  [**Instructor library**],
+  [Pydantic models with any provider],
+  [Wraps any provider],
+  [~99%],
+)
+]
+
+## The Instructor Pattern
+Instructor is the most practical tool for production structured outputs.
+It wraps any LLM provider with Pydantic validation and automatic
+retries.
+
+## Schema design for agent tools
+Good tool schemas make agents more reliable. Bad schemas cause confusion
+and errors.
+
+**Schema design principles:**
+
++ **Name tools with verbs**: `read_file`, `search_code`,
+  `run_tests` - not `file`, `search`, `tests`
++ **Describe constraints in the description**: "Must be unique in
+  the file" prevents ambiguity
++ **Use enums for fixed choices**:
+  `{"type": "string", "enum": ["critical", "warning", "info"]}`
++ **Mark required fields**: Don’t make everything optional
++ **Provide examples in descriptions**: "e.g. 'src/auth/login.py'"
+  reduces errors
++ **Keep schemas flat**: Deeply nested objects confuse models
+
+## Structured outputs and agent reliability
+The relationship between structured outputs and agent reliability is
+often underappreciated. Every tool call in an agent session requires
+structured output - the model must produce a JSON object with the
+correct tool name, the correct parameter names, and the correct
+parameter types. If any of these are wrong, the tool call fails, the
+agent retries, and tokens are wasted.
+
+The reliability of tool calls depends on three factors: the model’s
+native structured output capability, the quality of the tool schema
+(clear names, detailed descriptions, constrained types), and the
+complexity of the parameters (simple flat objects are more reliable than
+deeply nested ones).
+
+Teams that invest in tool schema quality see measurable improvements in
+agent reliability. A tool with a vague description ("do something with
+the database") and loosely typed parameters (all strings, no enums) will
+produce more failed tool calls than a tool with a specific description
+("execute a read-only SQL query against the application database,
+returns results as JSON array, maximum 1000 rows") and tightly typed
+parameters (enum for table names, integer for limit, boolean for
+include\_headers).
+
+## Error recovery for structured output failures
+When structured output fails - the model produces invalid JSON, missing
+fields, or wrong types - the agent needs a recovery strategy. The
+simplest strategy is retry with the error message: send the invalid
+output back to the model with a message like "your output was invalid:
+missing required field 'table\_name'. Please try again." Most models
+self-correct on the first retry.
+
+For production systems, use the Instructor pattern: define your expected
+output as a Pydantic model, validate the model’s output against it, and
+automatically retry with the validation error if it fails. Instructor
+handles this loop automatically, with configurable retry limits and
+exponential backoff. It supports every major model provider and achieves
+99%+ reliability on most schemas.
+
+The key insight is that structured output reliability is a function of
+your schema design, not just your model choice. A well-designed schema
+with clear descriptions, constrained types, and sensible defaults will
+produce reliable output from any frontier model. A poorly designed
+schema will produce unreliable output from even the best model.
+
+## Step-by-step: Adding structured outputs to your agent
++ **Start with JSON mode** for simple extraction tasks - it’s the
+  easiest to implement
++ **Move to function calling** when you need schema enforcement -
+  define tools with JSON Schema
++ **Use Pydantic/Zod models** for complex outputs - validate at
+  runtime, not just at generation
++ **Add retry logic** - if the model returns invalid output, feed
+  the validation error back and retry (max 3 attempts)
++ **Test with edge cases** - empty inputs, very long inputs, inputs
+  in unexpected languages
+
+**Checklist:** - \[ \] All agent tool definitions use JSON Schema
+with required fields - \[ \] Tool names are verbs (`read_file`, not
+`file`) - \[ \] Enum types are used for fixed choices - \[ \] Validation
+errors are fed back to the model for retry - \[ \] Edge case tests exist
+for each tool schema
+
+**Related Concepts:** MCP (Chapter 11), Agent Loop (Chapter 17),
+Tool Directory (Appendix A)

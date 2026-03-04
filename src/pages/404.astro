@@ -1,0 +1,17 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+
+<BaseLayout title="404 — The Agentic Engineering Guide">
+  <div class="min-h-screen flex items-center justify-center px-6">
+    <div class="text-center">
+      <span class="font-[var(--font-mono)] text-xs tracking-widest uppercase text-[var(--text-tertiary)] mb-4 block">404</span>
+      <h1 class="text-2xl font-semibold mb-3">Page not found</h1>
+      <p class="text-sm text-[var(--text-secondary)] mb-6">The page you're looking for doesn't exist.</p>
+      <a href={`${base}/`} class="text-sm underline underline-offset-3 hover:text-[var(--text-secondary)] transition-colors">
+        ← Back to home
+      </a>
+    </div>
+  </div>
+</BaseLayout>

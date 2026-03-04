@@ -1,0 +1,191 @@
+---
+title: "RAG vs. Agentic Search"
+chapter: 6
+part: 2
+partTitle: "Context Engineering"
+description: "The first limitation is static retrieval. The query is embedded once, and the top-K results are returned. If the initial query doesn’t capture the right intent - if the user asks h"
+order: 106
+---
+
+## The RAG problem
+Retrieval-Augmented Generation (RAG) was the dominant pattern for giving
+LLMs access to external knowledge from 2023 through early 2025. The
+pipeline is straightforward: embed the user’s query, search a vector
+database for similar chunks, stuff the top-K results into the context,
+and generate a response. RAG works, and for simple factual lookups it
+remains the right choice. But it has fundamental limitations that become
+apparent as tasks grow more complex.
+
+The first limitation is static retrieval. The query is embedded once,
+and the top-K results are returned. If the initial query doesn’t capture
+the right intent - if the user asks "how do I handle errors" but the
+relevant documentation uses the term "exception handling" - the results
+may miss the most relevant content. There’s no opportunity to
+reformulate the query based on what was found.
+
+The second limitation is no reasoning over retrieval. RAG retrieves,
+then generates. It doesn’t reason about whether the retrieved
+information is sufficient, contradictory, or incomplete. If the top-K
+chunks contain conflicting information - one says the rate limit is 100
+requests per minute, another says 1,000 - RAG has no mechanism to
+resolve the conflict. It just passes both to the model and hopes for the
+best.
+
+The third limitation is single-hop only. RAG answers questions that can
+be resolved with a single retrieval step. Multi-hop questions - "What’s
+the relationship between service A and service B, and how does that
+affect the deployment order?" - require multiple retrievals with
+reasoning in between. RAG can’t do this because it has no reasoning
+loop.
+
+The fourth limitation is context pollution. RAG retrieves the top-K most
+similar chunks, which often contain redundant information. This is the
+problem the context engineering stack (Chapter 5) solves, but most RAG
+implementations don’t include post-retrieval processing.
+
+## Agentic search
+Agentic search is a fundamentally different approach. Instead of a fixed
+pipeline, the agent decides how to search, evaluates the results, and
+iterates. The agent might start with a broad query, examine the results,
+realize it needs more specific information, reformulate the query,
+search again, find a contradiction between two sources, search for a
+third source to resolve it, and only then generate a response.
+
+Boris Cherny articulated the distinction: RAG retrieves. Agentic search
+reasons about what to retrieve, evaluates the results, and iterates. The
+difference is the reasoning loop. RAG is a pipeline - data flows in one
+direction. Agentic search is a loop - the agent can go back, refine, and
+try again.
+
+In practice, agentic search looks like this: the agent receives a
+question about how authentication works in a codebase. It searches for
+"authentication" and finds the auth middleware. It reads the middleware
+and discovers it delegates to an OAuth provider. It searches for the
+OAuth configuration. It finds the config references an environment
+variable for the provider URL. It searches for where that environment
+variable is set. It finds the deployment configuration. Now it has a
+complete picture - from the middleware to the OAuth provider to the
+deployment config - that no single retrieval step could have produced.
+
+The cost of agentic search is higher than RAG - multiple model calls,
+multiple retrievals, more tokens consumed. But for complex questions,
+the quality difference is dramatic. A RAG system answering "how does
+authentication work" might return the auth middleware file and nothing
+else. An agentic search system returns the complete authentication flow
+across multiple files and services.
+
+## When to use which
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Scenario], [RAG], [Agentic Search],
+  [Simple factual lookup],
+  [✅ Fast, cheap],
+  [Overkill],
+  [Multi-hop reasoning],
+  [❌ Single-hop only],
+  [✅ Iterative retrieval],
+  [Ambiguous queries],
+  [❌ Fixed interpretation],
+  [✅ Can clarify and refine],
+  [Cost-sensitive],
+  [✅ One retrieval],
+  [❌ Multiple retrievals],
+  [Latency-sensitive],
+  [✅ ~200ms],
+  [❌ Seconds to minutes],
+  [Complex codebase questions],
+  [❌ Surface-level],
+  [✅ Deep understanding],
+  [Real-time data],
+  [❌ Stale embeddings],
+  [✅ Live search],
+)
+]
+
+## Hybrid approaches
+The best production systems use both RAG and agentic search, routing
+between them based on query complexity. Simple factual lookups - "what’s
+the API rate limit," "what version of React are we using," "what’s the
+database connection string format" - go through RAG. They’re fast,
+cheap, and accurate for single-hop questions. Complex questions - "how
+does data flow from the frontend form to the database," "why is this
+endpoint slow," "what would break if we changed the user schema" - go
+through agentic search. They need the reasoning loop to produce useful
+answers.
+
+The routing decision can be automated. A lightweight classifier (or even
+a simple heuristic based on query length and the presence of words like
+"how," "why," "relationship," "affect") can route queries to the
+appropriate system. Over time, you can train the classifier on user
+feedback - queries where RAG produced insufficient answers should be
+routed to agentic search next time.
+
+## Building a codebase knowledge graph
+For engineering teams, the most valuable context source is the codebase
+itself. A codebase knowledge graph indexes the relationships that make a
+codebase understandable: file relationships (imports, dependencies, call
+graphs), git history (who changed what, when, and why), architecture
+decisions (ADRs, design docs, PR descriptions), and conventions (naming
+patterns, testing patterns, error handling patterns).
+
+The knowledge graph serves as the foundation for both RAG and agentic
+search within your codebase. When an agent needs to understand how a
+function is used, it queries the call graph. When it needs to understand
+why a design decision was made, it queries the ADR index. When it needs
+to understand the conventions for error handling, it queries the pattern
+index.
+
+Building a codebase knowledge graph is a significant investment - you
+need to parse the codebase, extract relationships, index git history,
+and keep everything up to date as the code changes. But the payoff is
+substantial. Agents with access to a knowledge graph produce
+dramatically better output than agents that can only read individual
+files. They understand context, follow conventions, and make changes
+that are consistent with the rest of the codebase.
+
+The knowledge graph should be exposed as an MCP server so that any agent
+- regardless of framework - can query it. This is the pattern that
+scales: build the knowledge infrastructure once, expose it through a
+standard protocol, and every agent benefits.
+
+## The future of search in agent systems
+The trajectory is clear: search is becoming agentic by default. The
+distinction between RAG and agentic search will blur as agent frameworks
+build iterative retrieval into their core loops. The question isn’t
+whether to adopt agentic search - it’s when the cost and latency
+trade-offs become acceptable for your use case.
+
+Three trends are accelerating this shift. First, model costs are
+declining rapidly - the cost of an additional retrieval step drops with
+every price cut, making multi-step search economically viable for more
+use cases. Second, models are getting better at search planning -
+they’re learning to formulate effective queries, evaluate results, and
+decide when they have enough information. Third, tool integration
+standards (MCP) make it easy to connect agents to diverse search
+backends - vector databases, full-text search, code search, web search -
+through a single protocol.
+
+For engineering teams, the practical implication is to build your search
+infrastructure with agentic search in mind. Don’t just build a vector
+database and a retrieval pipeline. Build a search MCP server that
+supports multiple query types (semantic search, keyword search, code
+search, git history search), returns structured results with metadata
+(source, date, confidence), and supports iterative refinement (the agent
+can ask follow-up questions based on initial results). This investment
+pays off as your agents become more sophisticated.
+
+**Related Concepts:** Context Window (4.1), Context Engineering
+Stack (5.1) **Related Practices:** Building a Codebase Knowledge
+Base (Chapter 22)
+
+
+> *"Your AI agent has more permissions than your senior developers."*
+> 
+
+Security is the widest gap in the agent stack. 80% of Fortune 500
+companies use AI agents. Fewer than 20% have meaningful security
+controls around them. This section covers the threat model, the
+authorization patterns, and the runtime protections that production
+agent deployments require.

@@ -1,0 +1,21 @@
+{
+  "name": "agentic-engineering-guide",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.2.6",
+    "@astrojs/sitemap": "^3.3.1",
+    "astro": "^5.5.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.1",
+    "tailwindcss": "^4.1.1"
+  }
+}

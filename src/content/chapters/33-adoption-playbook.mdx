@@ -1,0 +1,316 @@
+---
+title: "The Agent Adoption Playbook"
+chapter: 33
+part: 10
+partTitle: "Sustainability & Deployment"
+description: "Prerequisites - A codebase with version control. At least one engineer willing to lead the adoption. Budget for API costs (~$50-200/month for a small team)."
+order: 133
+---
+
+## Week-by-Week implementation
+This is the playbook for an engineering team adopting AI agents. Not
+theory. Not exploration. A sequence of actions with expected outcomes.
+
+**Prerequisites:** A codebase with version control. At least one
+engineer willing to lead the adoption. Budget for API costs
+(~\$50-200/month for a small team).
+
+## Before you start: Prerequisites
+Before starting the adoption playbook, verify that your team meets three
+prerequisites.
+
+**Prerequisite 1: CI/CD pipeline.** You need a working CI/CD
+pipeline that runs in under 5 minutes. Agents need fast feedback to
+self-correct. If your CI takes 30 minutes, agents can’t iterate
+effectively, and the adoption will feel slow and frustrating. If your CI
+is broken or flaky, fix it first - agents amplify CI problems because
+they trigger CI much more frequently than humans.
+
+**Prerequisite 2: Test coverage.** You need at least 60% test
+coverage for the areas where agents will work. Tests are the primary
+backpressure mechanism - they catch agent errors before they reach human
+review. Without tests, every agent change requires manual verification,
+which defeats the purpose of using agents.
+
+**Prerequisite 3: Type system or linting.** You need either a type
+system (TypeScript strict mode, Rust, Go) or a strict linting
+configuration (ESLint with strict rules, Pylint with high thresholds).
+This provides the second layer of backpressure - catching errors that
+tests miss. Without it, agents produce code that works but doesn’t
+follow your conventions, creating a review burden that grows over time.
+
+If you don’t meet these prerequisites, invest in them first. The
+playbook assumes they’re in place.
+
+## Week 1: Foundation
+**Goal:** Establish automated feedback infrastructure before
+introducing agents.
+
+**Day 1-2: Audit your feedback loops**
+
+**Day 3-4: Write AGENTS.md**
+
+**Day 5: Enable strict tooling**
+
+```bash
+# Enable everything. the agent will comply without complaint.
+
+# TypeScript strict mode
+npx tsc --init --strict
+
+# ESLint with strict rules
+npm install -D /eslint-plugin /parser
+# Enable: No-explicit-any, no-unused-vars, no-floating-promises
+
+# Pre-commit hooks
+npx husky init
+echo "npx tsc --noEmit && npx eslint . && npm test" > .husky/pre-commit
+```
+
+## Week 2: First agent tasks
+**Goal:** Run agents on low-risk tasks with full backpressure.
+
+**Start with these task types (low risk, high signal):**
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Task], [Why It’s Safe], [Expected Outcome],
+  [Write unit tests for existing code],
+  [Can’t break production],
+  [Higher coverage, agent learns codebase],
+  [Add input validation],
+  [Additive, doesn’t change logic],
+  [Catches edge cases you missed],
+  [Fix lint warnings],
+  [Mechanical, low judgment],
+  [Cleaner codebase],
+  [Update documentation],
+  [No runtime impact],
+  [Better onboarding],
+)
+]
+
+**Do NOT start with:** - Database migrations -
+Authentication/authorization changes - Public API modifications -
+Infrastructure changes
+
+## Week 3: Measure and adjust
+**Goal:** Review Week 2 data. Adjust backpressure. Expand scope.
+
+Week 3 is the most important week in the playbook. It’s where you
+transition from "trying agents" to "using agents with data." The data
+from Week 2 tells you whether your setup is working, what needs
+adjustment, and whether it’s safe to expand.
+
+If the acceptance rate from Week 2 is above 70%, your setup is working
+well - expand to more task types. If it’s between 50-70%, investigate
+the failures - are they caused by bad context (update AGENTS.md), bad
+backpressure (add more checks), or task complexity (stick to simpler
+tasks)? If it’s below 50%, don’t expand - fix the foundation first. A
+50% acceptance rate means half of the agent’s output is being rejected,
+which means the agent is creating work rather than saving it.
+
+**Weekly review checklist:**
+
+- ☐ What was the acceptance rate? (Target: \> 70%)
+- ☐ What was the average iteration count? (Target: 1-3)
+- ☐ What did the agent fail at? (Add tests/rules for those patterns)
+- ☐ What did the agent succeed at? (Expand to similar tasks)
+- ☐ What was the total cost? (Is it within budget?)
+- ☐ How much human review time was saved? (Track the trend)
+
+**Adjust backpressure based on data:**
+
+## Week 4: Team expansion
+**Goal:** Move from one engineer to the full team.
+
+**Run a 30-minute team session:**
+
++ Show the Week 2-3 data (acceptance rate, cost, time saved)
++ Demo the workflow: spec -\> agent -\> backpressure -\> review
++ Share AGENTS.md and explain how to update it
++ Assign each team member one low-risk task to try with an agent
++ Set up a shared Slack channel for agent wins and failures
+
+**Common objections and responses:**
+
+#align(center)[#table(
+  columns: 2,
+  align: (col, row) => (auto,auto,).at(col),
+  inset: 6pt,
+  [Objection], [Response],
+  ["I can write it faster myself"],
+  ["For this task, yes. Track it for a week and compare."],
+  ["I don’t trust AI code"],
+  ["That’s why we have backpressure. The agent self-corrects before you
+  see it."],
+  ["It’ll make us lazy"],
+  ["Morning no-AI sessions keep skills sharp. Chapter 20 covers this."],
+  ["What about security?"],
+  ["Agents run in sandboxes with scoped permissions. Chapter 7-10 covers
+  this."],
+)
+]
+
+## Weeks 5-8: Scale
+**Goal:** Agents handle routine work. Humans focus on architecture
+and judgment.
+
+**Week 5: Expand task types.** Move beyond the safe tasks from Week
+2. Start delegating feature implementation (with clear specifications),
+code refactoring (with explicit constraints), and API endpoint creation
+(with schema definitions). Each new task type should start with one
+example, reviewed carefully, before being added to the regular rotation.
+
+**Week 6: Implement model routing.** By now you have enough data to
+know which tasks are simple and which are complex. Configure your model
+router to send simple tasks (test generation, lint fixes, documentation)
+to a cheaper model and complex tasks (feature implementation,
+refactoring) to a frontier model. Monitor the quality difference - if
+the cheaper model produces acceptable output for simple tasks, you’ve
+just cut your costs by 40-60%.
+
+**Week 7: Add multi-agent workflows.** Start with the simplest
+multi-agent pattern: one agent generates code, another reviews it. The
+review agent catches issues that the backpressure pipeline misses -
+logical errors, architectural violations, and style inconsistencies.
+This adds cost (two agent sessions instead of one) but significantly
+improves output quality.
+
+**Week 8: Formalize the process.** Document everything you’ve
+learned. Update AGENTS.md with the patterns that work and the
+anti-patterns to avoid. Write a team playbook that covers task
+specification, model selection, review guidelines, and escalation
+procedures. Run the first monthly agent review (Appendix D) and set the
+cadence for ongoing reviews.
+
+## Expected outcomes by Week 8
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Metric], [Week 1], [Week 4], [Week 8],
+  [Tasks delegated to agents],
+  [0],
+  [5-10/week],
+  [20-40/week],
+  [Agent acceptance rate],
+  [N/A],
+  [60-70%],
+  [75-85%],
+  [Human review time per PR],
+  [25 min],
+  [15 min],
+  [8-12 min],
+  [Agent cost per task],
+  [N/A],
+  [\$1-3],
+  [\$0.50-1.50],
+  [Test coverage],
+  [Baseline],
+  [+5%],
+  [+15%],
+  [Engineer satisfaction],
+  [Skeptical],
+  [Cautiously positive],
+  ["Can’t go back"],
+)
+]
+
+These numbers come from teams that followed this playbook. Your numbers
+will vary based on codebase complexity, team size, and infrastructure
+maturity. Teams with strong engineering infrastructure (strict types,
+fast CI, comprehensive tests) typically reach these numbers faster.
+Teams with weaker infrastructure should invest in infrastructure first -
+the playbook assumes a solid foundation.
+
+## What success looks like at Week 8
+At the end of the eight-week playbook, a successful adoption looks like
+this. The team has a shared AGENTS.md that’s updated regularly. Every
+engineer has used agents for at least three task types. The acceptance
+rate is above 75%. The cost per completed task is declining. Human
+review time is declining. There have been zero security incidents. The
+team has a weekly review cadence and a monthly impact report.
+
+What success doesn’t look like: every task is delegated to agents (some
+tasks are better done manually), agents run without any human oversight
+(human review is always required), or the team has abandoned manual
+coding entirely (the conductor model preserves human skills through
+deliberate practice).
+
+The eight-week playbook is the beginning, not the end. After Week 8, the
+team should continue iterating - expanding task types, optimizing model
+routing, improving AGENTS.md, and refining review practices. Agent
+adoption is a continuous improvement process, not a one-time project.
+
+## Common adoption failures and how to avoid them
+**Failure 1: The Big Bang.** The team decides to go all-in on
+agents overnight. Every engineer gets access, every task is delegated,
+and there’s no infrastructure to support it. Within two weeks, costs are
+out of control, review queues are overflowing, and engineers are
+frustrated. The fix: follow the week-by-week playbook. Start small,
+measure, expand based on data.
+
+**Failure 2: The Skeptic’s Veto.** One senior engineer refuses to
+use agents, and their resistance spreads to the team. The adoption
+stalls because the team defers to the skeptic’s judgment. The fix: don’t
+require universal adoption. Let willing engineers demonstrate value with
+data. When the data shows clear benefits, the skeptic either comes
+around or becomes an outlier.
+
+**Failure 3: The Prompt Obsession.** The team spends weeks
+perfecting prompts instead of building infrastructure. They optimize the
+system prompt, experiment with few-shot examples, and A/B test prompt
+variations - while ignoring AGENTS.md, context engineering, and
+backpressure. The fix: invest in infrastructure first. A mediocre prompt
+with excellent context and strong backpressure outperforms a perfect
+prompt with no infrastructure.
+
+**Failure 4: The Security Afterthought.** The team deploys agents
+to production without security controls, planning to "add security
+later." Later never comes - until an incident forces it. The fix:
+implement the security checklist (Chapter 24) before the first
+production deployment. It takes a day. Cleaning up after a security
+incident takes weeks.
+
+**Failure 5: The Measurement Gap.** The team adopts agents but
+doesn’t measure impact. They can’t answer basic questions: Are agents
+saving time? Are they producing quality code? Are they worth the cost?
+Without data, they can’t justify continued investment, and the adoption
+withers. The fix: set up measurement from day one. Log every task, track
+every cost, measure every outcome.
+
+## Scaling beyond one team
+Once one team has successfully adopted agents, the question becomes: how
+do you scale to the entire organization? The answer is not "copy the
+first team’s setup." Different teams have different codebases, different
+workflows, and different risk profiles. What works for the frontend team
+may not work for the infrastructure team.
+
+The scaling approach that works is a center-of-excellence model. The
+first team becomes the center of excellence - they document their
+practices, share their AGENTS.md templates, publish their cost data, and
+mentor other teams through adoption. Each new team follows the same
+week-by-week playbook but adapts it to their specific context.
+
+The center of excellence should also own the shared infrastructure: the
+model routing layer, the cost tracking dashboard, the authorization
+model, and the observability pipeline. Individual teams shouldn’t build
+their own versions of these - that leads to fragmentation and
+inconsistency. Shared infrastructure, team-specific configuration.
+
+The scaling timeline depends on organization size. For a 50-person
+engineering org, expect 3-6 months to go from one team to full adoption.
+For a 500-person org, expect 6-12 months. For a 5,000-person org, expect
+12-24 months. The bottleneck is usually not technology - it’s
+organizational change management.
+
+**Related Concepts:** AI Fatigue (Chapter 20), Conductor Model
+(Chapter 21), Agent Maturity Model (Chapter 22) **Related
+Practices:** Backpressure (Chapter 32), Your First Agent in Production
+(Chapter 23)
+
+
+# APPENDICES

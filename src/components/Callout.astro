@@ -1,0 +1,23 @@
+---
+interface Props {
+  type?: "note" | "warning" | "tip" | "example";
+}
+
+const { type = "note" } = Astro.props;
+
+const labels: Record<string, string> = {
+  note: "Note",
+  warning: "Warning",
+  tip: "Tip",
+  example: "Example",
+};
+---
+
+<aside class="my-6 border-l-2 border-[var(--border)] bg-[var(--bg-secondary)] rounded-r-md px-4 py-3">
+  <span class="block text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)] mb-1">
+    {labels[type]}
+  </span>
+  <div class="text-sm text-[var(--text-secondary)] leading-relaxed [&>p]:mb-2 [&>p:last-child]:mb-0">
+    <slot />
+  </div>
+</aside>

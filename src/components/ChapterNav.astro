@@ -1,0 +1,35 @@
+---
+import { getAdjacentChapters, type ChapterMeta } from "../lib/chapters";
+
+interface Props {
+  chapters: ChapterMeta[];
+  currentSlug: string;
+}
+
+const { chapters, currentSlug } = Astro.props;
+const { prev, next } = getAdjacentChapters(chapters, currentSlug);
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+
+<nav class="mt-16 pt-8 border-t border-[var(--border)] flex justify-between gap-4">
+  {prev ? (
+    <a href={`${base}/${prev.slug}/`} class="group flex flex-col items-start gap-1 max-w-[45%]">
+      <span class="text-xs text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] transition-colors">
+        ← Previous
+      </span>
+      <span class="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors leading-snug">
+        {prev.title}
+      </span>
+    </a>
+  ) : <div />}
+  {next ? (
+    <a href={`${base}/${next.slug}/`} class="group flex flex-col items-end gap-1 max-w-[45%] ml-auto">
+      <span class="text-xs text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] transition-colors">
+        Next →
+      </span>
+      <span class="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors leading-snug text-right">
+        {next.title}
+      </span>
+    </a>
+  ) : <div />}
+</nav>

@@ -1,0 +1,326 @@
+---
+title: "The Agentic Engineering Landscape"
+chapter: 1
+part: 1
+partTitle: "Foundations"
+description: "This definition is deliberately simple, but it captures the essential difference between agents and other AI applications. A chatbot generates text in response to a prompt - it’s a"
+order: 101
+---
+
+## What are AI agents, really?
+Strip away the marketing and an AI agent is a program that uses a
+language model to decide what to do next. It operates in a loop: observe
+the environment, decide on an action, execute it, observe the result,
+decide again.
+
+This definition is deliberately simple, but it captures the essential
+difference between agents and other AI applications. A chatbot generates
+text in response to a prompt - it’s a function from text to text. An
+agent generates actions in response to a goal - it’s a loop that
+continues until the goal is achieved or a termination condition is met.
+The difference is autonomy. A chatbot does what you ask, once. An agent
+pursues a goal, making decisions along the way about what to do next.
+
+The autonomy is what makes agents both powerful and dangerous. Powerful
+because they can accomplish complex, multi-step tasks without human
+intervention at each step. Dangerous because they can take actions that
+have real-world consequences - modifying files, calling APIs, deploying
+code, sending messages - and those actions can be wrong.
+
+This is different from a chatbot. A chatbot responds to messages. An
+agent takes actions. It reads files, writes code, calls APIs, creates
+pull requests, queries databases, and makes decisions about what to do
+next based on what it observes.
+
+The distinction matters because it changes the engineering requirements:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Dimension], [Chatbot], [Agent],
+  [**Actions**],
+  [Generates text],
+  [Executes code, calls APIs, modifies systems],
+  [**Autonomy**],
+  [Responds to prompts],
+  [Decides what to do next],
+  [**Duration**],
+  [Single turn],
+  [Minutes to hours],
+  [**Risk**],
+  [Wrong answer],
+  [Wrong action (data loss, security breach, cost overrun)],
+  [**Authorization**],
+  [User’s permissions],
+  [Needs its own permission model],
+  [**Observability**],
+  [Log the response],
+  [Trace every decision and action],
+  [**Failure mode**],
+  [Bad text],
+  [Production incident],
+)
+]
+
+When you deploy an agent, you’re deploying a system that can act on your
+infrastructure. That’s a fundamentally different engineering problem
+than deploying a text generator.
+
+## The agent capability spectrum
+Not all agents are created equal. The capability spectrum ranges from
+simple assistants to fully autonomous systems, and understanding where
+your agents fall on this spectrum determines the engineering
+requirements.
+
+**Level 1: Completion agents** suggest code as you type. They
+operate within the IDE, have no access to external tools, and produce
+output that the developer reviews character by character. GitHub
+Copilot’s inline suggestions are the canonical example. The engineering
+requirements are minimal - the IDE handles the integration, and the
+developer is the quality gate.
+
+**Level 2: Chat agents** respond to natural language requests
+within a conversation. They can generate multi-line code, explain
+concepts, and answer questions about the codebase. They operate within a
+chat interface and produce output that the developer copies into their
+code. The engineering requirements are moderate - you need to manage
+context (what files are included in the conversation) and review output
+before using it.
+
+**Level 3: Command agents** execute actions in the development
+environment. They can read and write files, run commands, create
+branches, and open pull requests. They operate autonomously within a
+session, making decisions about what to do next based on the results of
+their actions. Claude Code, Cursor’s agent mode, and Ona are examples.
+The engineering requirements are significant - you need authorization
+(what can the agent do?), observability (what did the agent do?), and
+cost control (how much did it spend?).
+
+**Level 4: Background agents** run without human supervision. They
+monitor repositories for issues, automatically fix bugs, generate tests,
+update documentation, and create pull requests - all without a human
+initiating the task. GitHub Agentic Workflows and scheduled agent tasks
+are examples. The engineering requirements are the highest - you need
+everything from Level 3 plus automated quality gates, kill switches, and
+incident response procedures.
+
+Most teams in February 2026 are at Level 2-3. The transition from Level
+2 to Level 3 is where the engineering discipline of this guide becomes
+essential. The transition from Level 3 to Level 4 is where it becomes
+critical.
+
+## The competitive landscape of coding agents
+The coding agent market has consolidated around several distinct
+approaches, each with different trade-offs.
+
+**IDE-integrated agents** (Cursor, Windsurf, GitHub Copilot) embed
+AI directly into the development environment. They have the advantage of
+tight integration - they can see your open files, your cursor position,
+your recent edits - and low friction - you don’t need to switch contexts
+to use them. The disadvantage is that they’re limited to what the IDE
+can do. They can edit files and run terminal commands, but they can’t
+create cloud environments, manage infrastructure, or coordinate with
+other agents.
+
+**CLI agents** (Claude Code) run in the terminal alongside your
+existing tools. They have the advantage of flexibility - they can do
+anything you can do in a terminal - and transparency - you can see every
+command they run. The disadvantage is that they require more setup and
+more explicit context management than IDE-integrated agents.
+
+**Cloud agents** (Ona, OpenAI Codex, Devin) run in isolated cloud
+environments. They have the advantage of isolation - each task gets a
+fresh environment with no risk of affecting your local setup - and
+parallelism - you can run multiple agents simultaneously on different
+tasks. The disadvantage is latency - there’s a delay between submitting
+a task and seeing results, which makes them less suitable for
+interactive development.
+
+**Platform agents** (GitHub Agentic Workflows) are integrated into
+development platforms. They have the advantage of automation - they can
+trigger on events (issue creation, CI failure, schedule) without human
+initiation - and integration - they have native access to the platform’s
+features (PRs, issues, CI). The disadvantage is that they’re limited to
+the platform’s capabilities and may not support custom workflows.
+
+The right choice depends on your workflow. For interactive development
+(writing code, debugging, exploring), IDE-integrated or CLI agents are
+best. For batch tasks (migrations, test generation, documentation
+updates), cloud agents are best. For automated workflows (issue triage,
+CI fix, scheduled maintenance), platform agents are best. Most teams use
+a combination.
+
+## The current landscape (February 2026)
+The agent ecosystem has consolidated around a few key players and
+patterns.
+
+### Frameworks
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Framework], [Version], [Strengths], [Best For],
+  [[**LangChain / LangGraph**](https://github.com/langchain-ai/langchain)],
+  [v1.1.0],
+  [Mature ecosystem, graph-based orchestration],
+  [Complex multi-step workflows],
+  [[**CrewAI**](https://github.com/crewAIInc/crewAI)],
+  [v1.9.0],
+  [Role-based agents, simple API],
+  [Team-of-agents patterns],
+  [[**OpenAI Agents SDK**](https://github.com/openai/openai-agents-python)],
+  [GA (Mar 2025)],
+  [Native OpenAI integration, handoffs],
+  [OpenAI-first teams],
+  [[**Anthropic Claude Code**](https://docs.anthropic.com/en/docs/claude-code)],
+  [Production],
+  [Deep codebase understanding, tool use],
+  [Software engineering tasks],
+  [[**Microsoft AutoGen**](https://github.com/microsoft/autogen)],
+  [v0.4],
+  [Multi-agent conversations, research-grade],
+  [Research and experimentation],
+  [[**Goose (Block)**](https://github.com/block/goose)],
+  [Open source],
+  [MCP-native, extensible, observable],
+  [Production agent deployments],
+)
+]
+
+### Coding agents in production
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Agent], [Deployment Model], [Notable Capability],
+  [[**Ona**](https://ona.com)],
+  [Cloud (sandboxed environments)],
+  [Autonomous end-to-end: plans, codes, builds, tests, opens PRs. Each
+  agent gets an isolated ephemeral environment. Fleet-scale parallelism
+  for migrations. Runs in your VPC.],
+  [[**Claude Code**](https://docs.anthropic.com/en/docs/claude-code)],
+  [CLI + IDE],
+  [Full codebase reasoning, multi-file edits],
+  [[**OpenAI Codex**](https://openai.com/index/introducing-codex/)],
+  [Cloud-based],
+  [Parallel task execution, sandboxed],
+  [[**Cursor**](https://cursor.com)],
+  [IDE-integrated],
+  [Real-time code generation, tab completion],
+  [[**Windsurf**](https://windsurf.com)],
+  [IDE-integrated],
+  [Cascade multi-file editing],
+  [[**Devin**](https://devin.ai)],
+  [Autonomous],
+  [End-to-end task completion],
+  [[**GitHub Copilot**](https://github.com/features/copilot)],
+  [IDE + CLI],
+  [Workspace-aware, agent mode],
+)
+]
+
+### The numbers
+The adoption numbers tell a clear story:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Metric], [Value], [Source],
+  [Fortune 500 companies using AI agents],
+  [80%],
+  [Microsoft Security Blog, Feb 2026],
+  [Coding tasks that are AI-assisted],
+  [~60%],
+  [Anthropic Agentic Coding Trends, 2026],
+  [Enterprises already using AI agents],
+  [65%],
+  [CrewAI State of Agentic AI, Feb 2026],
+  [MCP servers publicly visible],
+  [8,000+],
+  [Security researchers, Feb 2026],
+  [MCP SDK monthly downloads],
+  [97M+],
+  [npm/PyPI, Jan 2026],
+  [Projects with AGENTS.md],
+  [60,000+],
+  [GitHub, Jan 2026],
+)
+]
+
+## Why "agentic engineering" is a discipline
+Building with agents isn’t just "using AI tools." It requires new
+engineering disciplines that don’t map cleanly onto existing software
+engineering practices. Teams that treat agent adoption as "add an AI
+library" end up with the same problems as teams that treated
+microservices as "split the monolith" - the technology works, but the
+engineering practices around it are missing.
+
+**Context Engineering** is the discipline of deciding what
+information goes into the model’s context window and how it’s
+structured. This determines output quality more than the model choice or
+the prompt. A mediocre model with excellent context outperforms a
+frontier model with poor context. Context engineering involves retrieval
+strategies, token budget management, context compression, and the
+organizational discipline of maintaining machine-readable documentation.
+It’s covered in Part II.
+
+**Agent Authorization** is the discipline of deciding what the
+agent is allowed to do. Traditional role-based access control doesn’t
+work for agents because agents need fine-grained, context-dependent,
+delegatable permissions. An agent working on a frontend task shouldn’t
+have access to database migration tools. An agent that’s been running
+for two hours without human check-in should have its permissions
+automatically narrowed. Google’s
+[Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/)
+model, adapted for agents via systems like
+[OpenFGA](https://openfga.dev), is the most promising approach.
+It’s covered in Part III.
+
+**Agent Observability** is the discipline of tracing what the agent
+did, why it did it, and what it cost. Standard application monitoring
+captures request/response pairs. Agent observability needs to capture
+decision chains - the model chose to call tool A, observed result B,
+decided to call tool C, and so on.
+[OpenTelemetry](https://opentelemetry.io) is extending to cover
+these semantics, but the tooling is still maturing. It’s covered in Part
+V.
+
+**Agent Orchestration** is the discipline of how agents coordinate,
+delegate, and recover from failures. This is distributed systems
+engineering applied to AI. The same problems that plague microservices -
+partial failures, network partitions, consistency guarantees - apply to
+multi-agent systems, with the added complexity that agents are
+non-deterministic. It’s covered in Part VI.
+
+**Human-Agent Collaboration** is the discipline of how humans and
+agents work together without burning out the humans. This is the least
+technical and most important discipline. The research on AI fatigue is
+clear: teams that adopt agents without changing their workflows
+experience higher burnout, not lower. The Conductor Model - where
+engineers direct agents rather than doing the work themselves - is the
+organizational pattern that makes agent adoption sustainable. It’s
+covered in Part VII.
+
+Each of these disciplines has its own failure modes, its own best
+practices, and its own maturity curve. Together, they form the
+discipline of agentic engineering.
+
+## The stack
+The agentic engineering stack has six layers, each building on the one
+below. At the bottom is the model layer - the frontier LLMs that provide
+reasoning capability. Above that is the context layer - the retrieval,
+compression, and structuring systems that feed information to models.
+The protocol layer sits next - MCP for tool integration, A2A for agent
+communication, AGENTS.md for codebase onboarding. The orchestration
+layer manages agent loops, multi-agent coordination, and memory. The
+security layer spans the entire stack - authorization, sandboxing,
+prompt injection defense, and audit logging. At the top is the human
+layer - the team practices, review processes, and organizational
+patterns that make everything work.
+
+Most teams start at the top (pick a coding agent, start using it) and
+work down (realize they need security, then observability, then context
+engineering). The teams that succeed start at the bottom and work up.
+This guide follows that bottom-up order.

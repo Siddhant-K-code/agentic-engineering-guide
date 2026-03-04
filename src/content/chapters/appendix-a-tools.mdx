@@ -1,0 +1,255 @@
+---
+title: "Appendix A: Tool & Framework Directory"
+description: "This appendix provides a curated list of tools and resources for building agent infrastructure. The landscape changes rapidly - tools listed here may have been superseded by the ti"
+order: 200
+---
+
+This appendix provides a curated list of tools and resources for
+building agent infrastructure. The landscape changes rapidly - tools
+listed here may have been superseded by the time you read this. The
+categories and evaluation criteria are more durable than the specific
+tools.
+
+When evaluating tools, consider five criteria. **Maturity:** Is it
+production-ready or experimental? Check the GitHub stars, the release
+cadence, and whether anyone is using it in production. **Standards
+compliance:** Does it support MCP, OpenTelemetry, and other standards?
+Non-standard tools create lock-in. **Community:** Is there an
+active community? Can you get help when you’re stuck?
+**Maintenance:** Is it actively maintained? Check the last commit
+date and the issue response time. **License:** Is the license
+compatible with your use case? Some tools are open-source for
+development but require a commercial license for production.
+
+## Agent frameworks
+Choosing an agent framework is one of the most consequential early
+decisions in agent adoption. The framework determines your development
+velocity, your operational capabilities, and your migration cost if you
+need to switch later.
+
+**For teams starting out:** Use the simplest framework that meets
+your needs. If you’re building a single-agent system for coding tasks,
+you may not need a framework at all - the model provider’s SDK
+(Anthropic’s Python SDK, OpenAI’s Python SDK) plus a simple loop is
+sufficient. Adding a framework adds complexity, and complexity you don’t
+need is complexity that slows you down.
+
+**For teams building multi-agent systems:** LangGraph or CrewAI
+provide the orchestration primitives you need - agent definitions, tool
+routing, state management, and handoff protocols. LangGraph is more
+flexible (graph-based, supports arbitrary workflows). CrewAI is more
+opinionated (role-based, supports team-of-agents patterns). Choose based
+on whether you want flexibility or convention.
+
+**For teams building production infrastructure:** Consider whether
+you need a framework or a platform. A framework gives you building
+blocks - you assemble them into a system. A platform gives you a
+complete system - you configure it for your use case. Frameworks are
+more flexible but require more engineering investment. Platforms are
+less flexible but get you to production faster.
+
+#align(center)[#table(
+  columns: 5,
+  align: (col, row) => (auto,auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [Type], [Language], [License], [Best For],
+  [[LangChain](https://github.com/langchain-ai/langchain)],
+  [Framework],
+  [Python/JS],
+  [MIT],
+  [Complex chains and workflows],
+  [[LangGraph](https://github.com/langchain-ai/langgraph)],
+  [Orchestration],
+  [Python/JS],
+  [MIT],
+  [Graph-based agent workflows],
+  [[CrewAI](https://github.com/crewAIInc/crewAI)],
+  [Framework],
+  [Python],
+  [MIT],
+  [Role-based multi-agent teams],
+  [[AutoGen](https://github.com/microsoft/autogen)],
+  [Framework],
+  [Python],
+  [MIT],
+  [Multi-agent conversations],
+  [[OpenAI Agents SDK](https://github.com/openai/openai-agents-python)],
+  [SDK],
+  [Python],
+  [MIT],
+  [OpenAI-native agent building],
+  [[Goose](https://github.com/block/goose)],
+  [Agent],
+  [Rust/Python],
+  [Apache 2.0],
+  [MCP-native production agent],
+  [[Mastra](https://github.com/mastra-ai/mastra)],
+  [Framework],
+  [TypeScript],
+  [MIT],
+  [TypeScript-first agent building],
+)
+]
+
+## Coding agents
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [Type], [Pricing], [Best For],
+  [[Ona](https://ona.com)],
+  [Autonomous],
+  [Usage-based],
+  [Autonomous end-to-end development, fleet-scale migrations, enterprise
+  (VPC)],
+  [[Claude Code](https://claude.ai)],
+  [CLI + IDE],
+  [Usage-based],
+  [Deep codebase reasoning],
+  [[OpenAI Codex](https://openai.com/codex)],
+  [Cloud],
+  [Usage-based],
+  [Parallel task execution],
+  [[Cursor](https://cursor.com)],
+  [IDE],
+  [\$20/month],
+  [Real-time code generation],
+  [[Windsurf](https://codeium.com/windsurf)],
+  [IDE],
+  [Free/\$15/month],
+  [Multi-file cascade editing],
+  [[GitHub Copilot](https://github.com/features/copilot)],
+  [IDE + CLI],
+  [\$10-39/month],
+  [Workspace-aware completion],
+  [[Devin](https://devin.ai)],
+  [Autonomous],
+  [Usage-based],
+  [End-to-end task completion],
+)
+]
+
+## Context engineering
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [Purpose], [Language], [License],
+  [[Distill](https://github.com/siddhant-k-code/distill)],
+  [Context deduplication and compression],
+  [Python],
+  [MIT],
+  [[AnythingLLM](https://github.com/Mintplex-Labs/anything-llm)],
+  [Local RAG and document management],
+  [JavaScript],
+  [MIT],
+  [[Chroma](https://github.com/chroma-core/chroma)],
+  [Vector database for embeddings],
+  [Python],
+  [Apache 2.0],
+  [[Weaviate](https://github.com/weaviate/weaviate)],
+  [Vector database],
+  [Go],
+  [BSD-3],
+  [[Qdrant](https://github.com/qdrant/qdrant)],
+  [Vector database],
+  [Rust],
+  [Apache 2.0],
+  [[skills.sh](https://skills.sh)],
+  [Open agent skills ecosystem (reusable SKILL.md files)],
+  [TypeScript],
+  [MIT],
+)
+]
+
+## Authorization & security
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [Purpose], [Language], [License],
+  [[OpenFGA](https://github.com/openfga/openfga)],
+  [Zanzibar-style authorization],
+  [Go],
+  [Apache 2.0],
+  [[sandbox-runtime](https://github.com/anthropic-experimental/sandbox-runtime)],
+  [Agent sandboxing],
+  [Python],
+  [MIT],
+  [[Bubblewrap](https://github.com/containers/bubblewrap)],
+  [Unprivileged sandboxing],
+  [C],
+  [LGPL],
+  [[gVisor](https://github.com/google/gvisor)],
+  [Application kernel for containers],
+  [Go],
+  [Apache 2.0],
+)
+]
+
+## Observability
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [Purpose], [Language], [License],
+  [[OpenTelemetry](https://opentelemetry.io)],
+  [Distributed tracing and metrics],
+  [Multi],
+  [Apache 2.0],
+  [[Langfuse](https://github.com/langfuse/langfuse)],
+  [LLM observability platform],
+  [TypeScript],
+  [MIT],
+  [[LangSmith](https://smith.langchain.com)],
+  [LangChain observability],
+  [Python],
+  [Commercial],
+  [[Arize Phoenix](https://github.com/Arize-ai/phoenix)],
+  [ML observability],
+  [Python],
+  [Apache 2.0],
+)
+]
+
+## MCP ecosystem
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [Purpose], [Language],
+  [[MCP SDK (TypeScript)](https://github.com/modelcontextprotocol/typescript-sdk)],
+  [Build MCP servers/clients],
+  [TypeScript],
+  [[MCP SDK (Python)](https://github.com/modelcontextprotocol/python-sdk)],
+  [Build MCP servers/clients],
+  [Python],
+  [[MCP Servers](https://github.com/modelcontextprotocol/servers)],
+  [Reference MCP server implementations],
+  [Multi],
+  [[MCP Inspector](https://github.com/modelcontextprotocol/inspector)],
+  [Debug and test MCP servers],
+  [TypeScript],
+)
+]
+
+## Local inference
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Tool], [Purpose], [Best For],
+  [[Ollama](https://ollama.ai)],
+  [Local model runner],
+  [Easy setup, many models],
+  [[llama.cpp](https://github.com/ggerganov/llama.cpp)],
+  [Optimized local inference],
+  [Performance-critical],
+  [[vLLM](https://github.com/vllm-project/vllm)],
+  [High-throughput serving],
+  [Production serving],
+  [[LocalAI](https://github.com/mudler/LocalAI)],
+  [OpenAI-compatible local API],
+  [Drop-in replacement],
+)
+]

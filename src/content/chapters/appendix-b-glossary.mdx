@@ -1,0 +1,152 @@
+---
+title: "Appendix B: Glossary"
+description: "[Google’s global authorization system. Basis for OpenFGA and similar systems.], ) ]"
+order: 201
+---
+
+#align(center)[#table(
+  columns: 2,
+  align: (col, row) => (auto,auto,).at(col),
+  inset: 6pt,
+  [Term], [Definition],
+  [**A2A**],
+  [Agent-to-Agent protocol. Google’s protocol for inter-agent
+  communication.],
+  [**AAIF**],
+  [Agentic AI Foundation. Linux Foundation project for agent
+  infrastructure standards.],
+  [**Agent Loop**],
+  [The core pattern of observe → think → decide → act → evaluate that
+  all agents follow.],
+  [**AGENTS.md**],
+  [Standard markdown file that tells AI agents how to work with a
+  project.],
+  [**Agentic Search**],
+  [Search where the agent decides what to search for, evaluates results,
+  and iterates. Contrast with RAG.],
+  [**Capability Token**],
+  [A JWT-like token encoding an agent’s permissions, time-bound and
+  scope-limited.],
+  [**Circuit Breaker**],
+  [Pattern that stops an agent from repeatedly failing by "opening"
+  after N failures.],
+  [**Conductor Model**],
+  [Engineering paradigm where humans orchestrate agents rather than
+  writing code directly.],
+  [**Context Engineering**],
+  [The discipline of optimizing what information goes into a model’s
+  context window.],
+  [**Context Pollution**],
+  [When redundant or irrelevant information in the context window
+  degrades output quality.],
+  [**Context Window**],
+  [The total amount of text (in tokens) a language model can process in
+  a single request.],
+  [**Defense in Depth**],
+  [Security approach using multiple layers of protection, each catching
+  what others miss.],
+  [**Delegation Chain**],
+  [When agents delegate tasks to other agents, each with a subset of the
+  parent’s permissions.],
+  [**Distill**],
+  [Open-source context engineering tool for deduplication and
+  compression.],
+  [**Episodic Memory**],
+  [Agent memory of past sessions, stored as summaries in a vector
+  database.],
+  [**Exfiltration**],
+  [Unauthorized extraction of data from a system, often through normal
+  agent capabilities.],
+  [**Hallucination**],
+  [When a language model generates incorrect or fabricated
+  information.],
+  [**Handoff**],
+  [Pattern where one agent transfers a task to another specialist
+  agent.],
+  [**Human-in-the-Loop**],
+  [Design pattern requiring human approval for certain agent actions.],
+  [**Indirect Injection**],
+  [Prompt injection via data the agent processes (webpages, documents,
+  tool responses).],
+  [**Landlock**],
+  [Linux security module for restricting filesystem access at the kernel
+  level.],
+  [**MCP**],
+  [Model Context Protocol. Standard protocol for connecting AI agents to
+  external tools.],
+  [**Meta-MCP**],
+  [Pattern for compressing many MCP tool definitions into a few
+  meta-tools.],
+  [**MMR**],
+  [Maximal Marginal Relevance. Algorithm balancing relevance and
+  diversity in retrieval.],
+  [**OpenFGA**],
+  [Open-source Zanzibar implementation for fine-grained authorization.
+  CNCF Incubating.],
+  [**Prompt Injection**],
+  [Attack where malicious instructions are embedded in data the LLM
+  processes.],
+  [**RAG**],
+  [Retrieval-Augmented Generation. Pattern for giving LLMs access to
+  external knowledge.],
+  [**ReAct**],
+  [Reason + Act. Agent pattern with explicit reasoning before each
+  action.],
+  [**ReBAC**],
+  [Relationship-Based Access Control. Authorization based on
+  relationships between entities.],
+  [**seccomp**],
+  [Secure Computing Mode. Linux kernel feature for restricting system
+  calls.],
+  [**SKILL.md**],
+  [Markdown file with YAML frontmatter that encodes reusable procedural
+  knowledge for AI agents. Installed via the skills.sh ecosystem.],
+  [**Semantic Memory**],
+  [Long-term agent memory stored as a knowledge graph.],
+  [**Session Memory**],
+  [Short-term agent memory within a single conversation/session.],
+  [**Token**],
+  [The basic unit of text processing for language models. ~4 characters
+  in English.],
+  [**Token Budget**],
+  [Deliberate allocation of context window capacity across different
+  purposes.],
+  [**Tool Poisoning**],
+  [Attack where malicious instructions are embedded in tool/API
+  responses.],
+  [**Two-Layer Review**],
+  [Review process: Layer 1 (automated checks) + Layer 2 (human
+  judgment).],
+  [**Backpressure**],
+  [Automated feedback loops that catch agent errors before they reach
+  human review.],
+  [**Cascade Routing**],
+  [Model routing pattern that tries cheap models first and escalates to
+  expensive ones only if quality is insufficient.],
+  [**Ephemeral Environment**],
+  [A fresh, isolated environment created for each agent session and
+  destroyed when complete.],
+  [**Fleet-Scale Parallelism**],
+  [Running hundreds of identical agents against different targets
+  simultaneously.],
+  [**Golden Dataset**],
+  [A curated set of tasks with known-good outputs used for agent
+  evaluation.],
+  [**Kill Switch**],
+  [A mechanism to immediately terminate an agent session when it
+  exhibits anomalous behavior.],
+  [**LLM-as-Judge**],
+  [Using a language model to evaluate the quality of another model’s
+  output.],
+  [**Model Routing**],
+  [Sending different tasks to different models based on task
+  characteristics and cost constraints.],
+  [**Stall Detection**],
+  [Detecting when an agent is making the same tool call repeatedly
+  without progress.],
+  [**Zanzibar**],
+
+  [Google’s global authorization system. Basis for OpenFGA and similar
+  systems.],
+)
+]

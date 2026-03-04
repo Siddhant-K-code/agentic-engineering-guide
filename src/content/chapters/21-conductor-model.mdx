@@ -1,0 +1,295 @@
+---
+title: "The Conductor Model"
+chapter: 21
+part: 7
+partTitle: "Team Practices"
+description: "The analogy to a musical conductor is deliberate. A conductor doesn’t play every instrument. They understand what each instrument can do, they set the tempo, they make judgment cal"
+order: 121
+---
+
+## Engineers as orchestrators
+The traditional engineering model is straightforward: engineers write
+code. The emerging model is different: engineers orchestrate agents that
+write code. This isn’t a subtle shift. It changes what skills matter,
+how teams are structured, and what a productive day looks like.
+
+The analogy to a musical conductor is deliberate. A conductor doesn’t
+play every instrument. They understand what each instrument can do, they
+set the tempo, they make judgment calls about interpretation, and they
+ensure the ensemble produces something coherent. An engineering
+conductor does the same with AI agents: they specify intent, provide
+context, set constraints, and review the output.
+
+The best conductors don’t watch agents type. They delegate tasks with
+clear specifications, let agents work asynchronously - often in parallel
+across isolated environments - and review the results when they’re
+ready. The value is in the specification and the judgment, not the
+typing.
+
+The conductor model works because it aligns human strengths with agent
+strengths. Humans are good at judgment, creativity, context
+understanding, and strategic thinking. Agents are good at execution,
+consistency, speed, and tireless repetition. The conductor model puts
+humans in charge of the things they’re good at (deciding what to build,
+how to build it, and whether the result is correct) and delegates the
+things agents are good at (writing the code, running the tests,
+generating the documentation).
+
+The model also works because it’s sustainable. Writing code all day is
+mentally exhausting. Reviewing code all day is also mentally exhausting.
+But alternating between specification (creative, strategic work) and
+review (analytical, evaluative work) is less exhausting than either one
+alone. The conductor model creates a natural rhythm that’s more
+sustainable than either pure coding or pure reviewing.
+
+## What conductors do
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Activity], [Time Before], [Time After], [Change],
+  [Writing code],
+  [60%],
+  [15%],
+  [-45%],
+  [Reviewing code],
+  [15%],
+  [35%],
+  [+20%],
+  [Specifying intent],
+  [5%],
+  [20%],
+  [+15%],
+  [Architecture decisions],
+  [10%],
+  [20%],
+  [+10%],
+  [Debugging],
+  [10%],
+  [10%],
+  [Same],
+)
+]
+
+The conductor spends more time on the activities that require human
+judgment and less time on the activities that agents can handle.
+
+The conductor model works best when agents run asynchronously. Platforms
+like Ona let you scope and delegate tasks to agents that work in
+parallel, each in their own isolated environment. You check back when
+work is ready for review - you don’t watch them type. This is the "put
+agents on rails" principle from Chapter 20 in practice.
+
+## Skills for the conductor role
+The conductor role requires a different skill set than traditional
+engineering. Some of these skills are new. Others are existing skills
+that become more important.
+
+#align(center)[#table(
+  columns: 2,
+  align: (col, row) => (auto,auto,).at(col),
+  inset: 6pt,
+  [Skill], [Why It Matters],
+  [**Specification writing**],
+  [Clear specs produce better agent output],
+  [**Context curation**],
+  [Knowing what context to provide (and what to omit)],
+  [**Quality judgment**],
+  [Evaluating agent output for correctness, style, and risk],
+  [**Task decomposition**],
+  [Breaking complex work into agent-sized pieces],
+  [**Risk assessment**],
+  [Knowing when to let the agent run vs. when to intervene],
+)
+]
+
+**Specification writing** is the most important new skill. The
+quality of agent output is directly proportional to the quality of the
+specification. Engineers who can write clear, specific, unambiguous task
+descriptions get dramatically better results than engineers who write
+vague descriptions. This skill is closely related to technical writing -
+the ability to communicate precisely in prose.
+
+**Output evaluation** requires a different approach than reviewing
+human-generated code. Human code has a narrative - you can follow the
+developer’s thought process through the code. Agent code doesn’t have a
+narrative - it’s technically correct but may lack the coherence that
+comes from a human understanding the problem. Evaluating agent output
+requires the ability to assess correctness without relying on narrative
+coherence.
+
+**Context curation** is the skill of deciding what information the
+agent needs to do its job. Too little context and the agent guesses. Too
+much context and the agent gets confused. The right context - the
+relevant files, the applicable conventions, the key constraints -
+produces the best output. This skill develops with practice and is
+closely related to the ability to explain a problem clearly to a
+colleague.
+
+**Task decomposition** is the skill of breaking complex work into
+agent-sized pieces. An agent-sized piece is a task that can be completed
+in a single session (typically 15-60 minutes), that has a clear
+definition of done, and that can be verified with automated checks.
+Tasks that are too large lead to context window overflow and quality
+degradation. Tasks that are too small create coordination overhead. |
+**System thinking** | Understanding how changes affect the broader
+system |
+
+## Writing effective task specifications
+The quality of agent output is directly proportional to the quality of
+the task specification. A vague specification ("fix the login page")
+produces vague output. A precise specification produces precise output.
+
+An effective task specification has five components. **Goal:** What
+should be different when the task is complete? "The login page should
+validate email format before submitting the form." **Context:**
+What does the agent need to know? "The login form is in
+src/components/LoginForm.tsx. It uses React Hook Form for validation.
+The email validation regex is in src/utils/validators.ts."
+**Constraints:** What should the agent NOT do? "Don’t modify the
+form layout. Don’t change the existing password validation. Don’t add
+new dependencies." **Verification:** How will we know the task is
+complete? "The form should show an error message for invalid email
+formats. The existing tests should still pass. Add a new test for email
+validation." **Scope:** What files should the agent touch? "Only
+modify LoginForm.tsx and validators.ts. Add tests in
+LoginForm.test.tsx."
+
+The specification doesn’t need to be long - the example above is five
+sentences. But it needs to be specific. Each sentence eliminates
+ambiguity and reduces the chance of the agent going off track.
+
+## The daily rhythm of a conductor
+What does a typical day look like for an engineer operating in the
+conductor model? The rhythm is different from traditional engineering,
+and understanding it helps teams transition smoothly.
+
+**Morning (8:00-10:00): Review and triage.** Start by reviewing
+overnight agent work - PRs created by background agents, results from
+long-running tasks, alerts from the observability dashboard. Approve the
+PRs that look good, provide feedback on the ones that need adjustment,
+and investigate any alerts. This is the highest-leverage time of the day
+- you’re reviewing work that was done while you slept.
+
+**Mid-morning (10:00-12:00): Specification and delegation.** Write
+task specifications for the day’s work. Break down the feature you’re
+building into agent-sized pieces. For each piece, write a clear
+specification (goal, context, constraints, verification criteria) and
+delegate it to an agent. Start the agents running and move on.
+
+**Afternoon (13:00-15:00): Deep work.** This is the time for work
+that agents can’t do - architecture design, design discussions,
+mentoring, code review of complex changes, and the kind of creative
+problem-solving that requires human judgment. Protect this time
+aggressively. Don’t check agent status. Don’t review PRs. Focus on the
+work that only you can do.
+
+**Late afternoon (15:00-17:00): Review and iterate.** Review the
+agent output from the morning’s delegations. Approve, provide feedback,
+or re-delegate as needed. Update AGENTS.md with any new patterns or
+conventions that emerged during the day. Plan tomorrow’s work.
+
+This rhythm maximizes the value of both human and agent time. The human
+does the work that requires judgment (morning review, afternoon deep
+work) and delegates the work that requires execution (mid-morning
+delegation). The agent does the work that requires execution (running in
+the background) and provides the raw material for human judgment (PRs,
+reports, analysis).
+
+## The conductor anti-patterns
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Anti-Pattern], [Description], [Fix],
+  [**Micromanaging**],
+  [Watching the agent work in real-time, intervening constantly],
+  [Set clear specs, let it run, review the result],
+  [**Rubber-stamping**],
+  [Approving agent output without review],
+  [Establish review checklists, enforce them],
+  [**Over-delegating**],
+  [Giving the agent tasks that require human judgment],
+  [Keep architecture, security, and design decisions human],
+  [**Under-delegating**],
+  [Doing work manually that agents could handle],
+  [Start with low-risk tasks, build trust gradually],
+  [**Prompt-tweaking**],
+  [Spending hours perfecting prompts instead of improving context],
+  [Invest in AGENTS.md, context engineering, better specs],
+)
+]
+
+## Transitioning to the conductor model
+The transition from traditional engineering to the conductor model is
+uncomfortable. Engineers who have spent years developing their coding
+skills are being asked to shift their primary activity from writing code
+to specifying intent and reviewing output. This feels like a demotion -
+"I’m not coding anymore, I’m just telling a machine what to do."
+
+The reframe that helps: you’re not doing less. You’re doing different.
+The specification and review work requires deep engineering judgment -
+the same judgment that made you a good coder. You’re applying that
+judgment at a higher level of abstraction, which means you can have more
+impact. Instead of implementing one feature per day, you can direct the
+implementation of three features per day, each benefiting from your
+architectural judgment and domain knowledge.
+
+The transition happens gradually. In the first week, you delegate one
+low-risk task per day - writing a unit test, adding input validation,
+fixing a lint warning. You write a clear specification: what the agent
+should do, what files it should touch, what constraints it should
+respect, and what "done" looks like. You review the output carefully.
+
+By week four, you’re delegating five to ten tasks per day. You’ve
+learned which tasks agents handle well (mechanical, well-defined, with
+clear verification criteria) and which they struggle with (ambiguous
+requirements, cross-cutting concerns, tasks that require understanding
+unwritten team norms). Your specifications have gotten sharper because
+you’ve seen what happens when they’re vague.
+
+By week eight, the conductor model feels natural. You spend your
+mornings reviewing overnight agent work, your midday specifying new
+tasks, and your afternoons on the work that requires human creativity -
+architecture decisions, design discussions, mentoring, and the kind of
+deep thinking that agents can’t do.
+
+## The conductor model and team structure
+The conductor model has implications for team structure that go beyond
+individual workflow changes. In a traditional engineering team, work is
+distributed based on expertise and availability - the frontend engineer
+takes frontend tasks, the backend engineer takes backend tasks. In a
+conductor-model team, work is distributed based on specification quality
+and review capacity.
+
+A senior engineer who writes excellent specifications can direct agents
+across the entire stack - frontend, backend, infrastructure, testing -
+because the agent handles the implementation details. This means senior
+engineers become more productive (they can direct work across more
+domains) while junior engineers shift to a review-heavy role (they
+review agent output, learning the codebase and developing judgment in
+the process).
+
+The team structure implications are significant. You may need fewer
+specialists and more generalists. You may need fewer implementers and
+more reviewers. You may need to redefine what "senior" means - not the
+person who writes the most code, but the person who writes the best
+specifications and makes the best judgment calls about agent output.
+
+## When the conductor model doesn’t work
+The conductor model isn’t universal. It works poorly for tasks that
+require deep creative thinking (designing a new programming language,
+inventing a novel algorithm), tasks that require physical-world
+interaction (hardware debugging, network troubleshooting), tasks where
+the specification is the hard part (understanding ambiguous
+requirements, navigating organizational politics), and tasks where the
+feedback loop is too slow (changes that can only be verified in
+production, changes that require user testing).
+
+For these tasks, the traditional model - human does the work, AI assists
+- is still the right approach. The conductor model is a tool, not a
+religion. Use it where it works, and don’t force it where it doesn’t.
+
+**Related Concepts:** AI Fatigue (20.1), Agent Maturity Model
+(22.1) **Related Practices:** Measuring Agent Impact (Chapter 25),
+Backpressure (Chapter 32)

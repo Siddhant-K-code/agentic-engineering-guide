@@ -1,0 +1,198 @@
+---
+title: "Context Windows"
+chapter: 4
+part: 2
+partTitle: "Context Engineering"
+description: "The context window is the fundamental constraint of agent systems. It determines how much information the model can consider when making decisions, how long a conversation can cont"
+order: 104
+---
+
+## What is a context window?
+A context window is the total amount of text (measured in tokens) that a
+language model can process in a single request. Everything the model
+knows about your task - the system prompt, the conversation history, the
+retrieved documents, the code files, the tool definitions - must fit
+inside this window. A token is roughly four characters in English, so a
+200K token context window holds approximately 150,000 words - about the
+length of two novels.
+
+The context window is the fundamental constraint of agent systems. It
+determines how much information the model can consider when making
+decisions, how long a conversation can continue before context is lost,
+and how much of your codebase the agent can "see" at any given time.
+Understanding this constraint - and engineering around it - is the
+single most impactful skill in agent development.
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Model], [Context Window], [Approximate Pages of Text],
+  [GPT-5.2],
+  [400K tokens],
+  [~640 pages],
+  [GPT-5.3-Codex],
+  [400K tokens],
+  [~640 pages],
+  [Claude Sonnet 4.6],
+  [200K (1M beta)],
+  [~320 pages (1,600 beta)],
+  [Claude Opus 4.6],
+  [200K (1M beta)],
+  [~320 pages (1,600 beta)],
+  [Gemini 3.1 Pro],
+  [1M tokens],
+  [~1,600 pages],
+)
+]
+
+These numbers look large. They’re not.
+
+A typical monorepo has millions of lines of code. A typical enterprise
+has thousands of documents. A typical agent session involves dozens of
+tool calls, each adding to the context. The window fills up fast.
+
+## Why size isn’t everything
+Bigger context windows don’t solve the fundamental problem. They create
+an illusion of abundance that leads teams to skip the hard work of
+context curation. Window size is necessary but not sufficient.
+
+### The "lost in the middle" problem
+Research from Stanford and UC Berkeley
+([Liu et al., 2023, "Lost in the Middle: How Language Models Use Long Contexts"](https://arxiv.org/abs/2307.03172))
+demonstrated that language models perform significantly worse on
+information placed in the middle of long contexts. They attend well to
+the beginning and end of the context window, but information in the
+middle gets degraded. This isn’t a bug that will be fixed - it’s a
+consequence of how attention mechanisms work.
+
+The practical implication is that context ordering matters as much as
+context content. If you place the most important information - the task
+description, the key constraints, the relevant code - in the middle of a
+100K token context, the model is less likely to use it effectively than
+if you place it at the beginning or end. Production context engineering
+pipelines should order information deliberately: system instructions
+first, then the most relevant retrieved context, then conversation
+history, with the current task restated at the end.
+
+The 1M token windows available in Gemini 3.1 Pro and Claude’s beta don’t
+eliminate this problem - they extend it. A model processing 1M tokens
+has even more middle to lose information in. The teams getting the best
+results with large context windows are the ones that still curate
+aggressively and use the extra space for breadth (more diverse sources)
+rather than depth (more tokens per source).
+
+### The cost problem
+Tokens cost money, and the cost scales linearly with context size. Every
+token you send is a token you pay for, and every token the model
+processes adds latency.
+
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Approach], [Tokens Sent], [Cost per Request], [Latency],
+  [Naive (dump everything)],
+  [100K],
+  [\$0.30],
+  [~8s],
+  [With context engineering],
+  [15K],
+  [\$0.045],
+  [~2s],
+  [**Savings**],
+  [**85%**],
+  [**85%**],
+  [**75%**],
+)
+]
+
+At scale, this is the difference between a viable product and a money
+pit. A team running 500 agent tasks per day at 100K tokens each spends
+roughly \$150/day on input tokens alone. With context engineering, that
+drops to \$22.50/day. Over a year, that’s \$46,500 in savings - from a
+single optimization. And the latency improvement means agents complete
+tasks faster, which compounds into higher throughput.
+
+The cost problem gets worse with multi-turn agent sessions. Each turn in
+the conversation adds to the context. A 20-turn agent session that
+starts with 15K tokens of context might end with 80K tokens as tool
+results, intermediate reasoning, and conversation history accumulate.
+Without context management - summarizing earlier turns, dropping
+irrelevant tool results, compressing conversation history - costs grow
+quadratically with session length.
+
+### The noise problem
+More context doesn’t mean better context. If you send the model 100K
+tokens and only 15K are relevant, you’ve diluted the signal with 85K
+tokens of noise. The model has to figure out what matters, and it often
+gets confused. This manifests as hallucinations, contradictory outputs,
+and the model latching onto irrelevant details while ignoring the
+information you actually wanted it to use.
+
+The noise problem is particularly acute in retrieval-augmented systems.
+A naive RAG pipeline retrieves the top-K most similar chunks to the
+query, but similarity isn’t the same as relevance. A chunk about "Python
+decorators for caching" is semantically similar to a query about "Python
+decorators for authentication," but it’s not relevant. Including it in
+the context doesn’t just waste tokens - it actively misleads the model.
+
+This is the core insight of context engineering: **less, better
+context beats more, noisier context.** The goal isn’t to fill the context
+window. It’s to give the model exactly the information it needs, in the
+right order, with minimal noise.
+
+## Token budgets
+A token budget is a deliberate allocation of your context window across
+different purposes. Just as a financial budget prevents overspending, a
+token budget prevents context bloat.
+
+A well-designed token budget for a 200K context window might allocate 5K
+tokens for system instructions and AGENTS.md content, 15K for tool
+definitions (or 2K with meta-MCP compression), 30K for retrieved context
+(code files, documentation, search results), 20K for conversation
+history, and 130K as headroom for tool results and model reasoning. The
+headroom is important - agent sessions are unpredictable, and you need
+room for the model to work.
+
+The key insight is that tool definitions alone can consume a shocking
+amount of context. A typical MCP setup with 60+ tools might use 15-20K
+tokens just for tool descriptions - each tool needs a name, description,
+parameter schema, and usage examples. This is why meta-MCP patterns
+(compressing tool definitions into a discovery-then-load pattern)
+matter. They can reduce tool definition overhead by 88%, freeing up
+context for the information that actually matters.
+
+Token budgets should be enforced programmatically, not by convention.
+Your agent framework should track token usage per category and warn or
+truncate when a category exceeds its budget. Without enforcement,
+budgets are aspirational - and aspirational budgets don’t prevent the 3
+AM cost alert.
+
+## Context engineering as a team discipline
+Context engineering isn’t one person’s job. It’s a team discipline that
+touches every role in the engineering organization.
+
+Platform engineers build context pipelines - the retrieval, clustering,
+selection, and compression systems that transform raw information into
+curated context. They manage token budgets, deploy context
+infrastructure, and monitor context quality metrics. Application
+engineers write good AGENTS.md files, structure code for agent
+readability, and ensure that the information agents need is accessible
+and well-organized. Security engineers ensure sensitive data doesn’t
+leak into context - API keys, customer data, internal URLs - and audit
+context contents for compliance. Engineering managers set context budget
+policies, monitor context costs, and make trade-off decisions about
+context quality versus cost.
+
+The organizational challenge is that context quality is invisible until
+it fails. No one notices good context - the agent just works. Bad
+context produces bad output, and the blame usually falls on the model or
+the prompt rather than the context. Teams that treat context engineering
+as a first-class discipline - with dedicated ownership, monitoring, and
+continuous improvement - consistently get better results from the same
+models than teams that treat it as an afterthought.
+
+**Related Workflows:** Setting Up Distill for Monorepo Context
+(Chapter 23) **Related Practices:** Context Budget Policy (Chapter
+24)

@@ -1,0 +1,164 @@
+---
+title: "Agent Memory & Checkpoints"
+chapter: 19
+part: 6
+partTitle: "Agent Orchestration"
+description: "Long-running tasks that span hours or days lose context when the session ends or the context window fills up. An agent that spent two hours understanding a complex codebase starts "
+order: 119
+---
+
+## The memory problem
+Agents are stateless by default. Each LLM call is independent - the
+model has no memory of previous sessions, no knowledge of what it did
+yesterday, and no awareness of what other agents have learned. This is a
+fundamental limitation that creates three categories of problems.
+
+Long-running tasks that span hours or days lose context when the session
+ends or the context window fills up. An agent that spent two hours
+understanding a complex codebase starts from scratch if the session is
+interrupted. Recurring tasks suffer from the same problem - an agent
+that writes tests for your codebase every week re-learns the testing
+conventions, the project structure, and the common patterns every single
+time. And team knowledge is siloed - insights from one agent session
+(this module has a tricky initialization sequence, this API has an
+undocumented rate limit, this test is flaky on Mondays) aren’t available
+to other agents or future sessions.
+
+The memory problem is particularly acute for enterprise teams. A team of
+ten engineers, each running five agent sessions per day, generates fifty
+sessions of institutional knowledge daily - and throws all of it away.
+The agent that discovered a subtle bug in the payment service’s error
+handling on Monday has no way to share that knowledge with the agent
+that’s modifying the same service on Tuesday.
+
+## Types of agent memory
+Agent memory comes in three forms. **Session memory** is the
+conversation history within a single agent run - the messages, tool
+calls, and results that accumulate as the agent works. This is the
+simplest form and is handled automatically by the agent framework. The
+challenge is that it grows with every step, consuming context window
+space and increasing costs.
+
+**Persistent memory** survives across sessions. When an agent
+finishes a task, it saves a summary of what it did, what it learned, and
+what went wrong. The next time an agent works on the same codebase, it
+can load these summaries to avoid repeating mistakes. The simplest
+implementation is an AGENTS.md file that agents read at the start of
+every session. More sophisticated systems use vector databases to store
+and retrieve relevant memories based on the current task.
+
+**Shared memory** makes one agent’s knowledge available to others.
+When a code review agent discovers that a particular module has a tricky
+initialization sequence, that knowledge should be available to the code
+generation agent working on the same module. Shared memory is typically
+implemented through a common knowledge store - a database, a set of
+markdown files, or an MCP server that all agents can query.
+
+## Checkpoints and codebase knowledge
+For long-running tasks that span hours or days, checkpoints save the
+agent’s progress so work can be resumed after interruptions. A
+checkpoint captures the current state of the task, the files that have
+been modified, the decisions that have been made, and the remaining
+work. If the agent crashes or hits a cost limit, it can resume from the
+last checkpoint rather than starting over.
+
+Codebase memory is a specific form of persistent memory that indexes
+your git history, PR reviews, and architecture decisions. When an agent
+needs to understand why a particular design choice was made, it can
+query the codebase memory rather than guessing. This is the difference
+between an agent that treats every session as its first day and an agent
+that has institutional knowledge.
+
+## Memory architecture decisions
+The key architectural decision in agent memory is where to store it and
+how to retrieve it. The simplest approach is file-based - store session
+summaries as markdown files in the repository, and include them in the
+agent’s context at the start of each session. This works for small teams
+and simple projects but doesn’t scale - the summaries grow over time,
+consuming more and more of the context window.
+
+The next level is vector-based - store memories as embeddings in a
+vector database (Chroma, Qdrant, Weaviate) and retrieve only the
+memories relevant to the current task. This scales better but introduces
+retrieval quality as a concern - if the retrieval misses a relevant
+memory, the agent doesn’t benefit from it. The quality of your embedding
+model and your retrieval strategy directly affects the quality of your
+agent’s memory.
+
+The most sophisticated approach is graph-based - store memories as nodes
+in a knowledge graph with typed relationships (this file depends on that
+file, this decision was made because of that constraint, this pattern is
+used in these modules). Graph-based memory supports complex queries that
+vector retrieval can’t handle - "what are all the downstream effects of
+changing the user schema?" requires traversing relationships, not just
+finding similar embeddings.
+
+For most teams, the right approach is to start with file-based memory
+(AGENTS.md plus session summaries), graduate to vector-based memory when
+the file-based approach stops scaling, and consider graph-based memory
+only when you need relationship-aware queries. Each level adds
+complexity and maintenance burden, so don’t over-invest early.
+
+## Memory and learning from mistakes
+The most valuable form of agent memory is learning from mistakes. When
+an agent produces output that a human corrects, that correction contains
+information about what the agent got wrong and what the right answer
+looks like. If this information is captured and made available to future
+sessions, the agent avoids repeating the same mistakes.
+
+The simplest implementation is a "lessons learned" file - a markdown
+file in the repository that lists common agent mistakes and their
+corrections. "When modifying the payment service, always update the
+idempotency key. The agent has previously forgotten this, causing
+duplicate charges in testing." "The notification service uses a custom
+event bus, not the standard message queue. The agent has previously used
+the wrong messaging system." Each lesson is a specific, actionable
+instruction that prevents a known failure mode.
+
+A more sophisticated implementation indexes corrections in a vector
+database and retrieves relevant lessons based on the current task. When
+the agent is about to modify the payment service, the system retrieves
+all lessons related to the payment service and includes them in the
+context. This scales better than a flat file but requires more
+infrastructure.
+
+The key insight is that agent memory should be curated, not
+comprehensive. Storing every agent session produces a large, noisy
+dataset that’s expensive to search and mostly irrelevant. Storing only
+the corrections - the moments where human judgment overrode agent output
+- produces a small, high-signal dataset that directly improves future
+performance.
+
+## Step-by-step: Setting up agent memory
++ **Start with AGENTS.md** (Chapter 13) - this is the simplest form
+  of persistent memory
++ **Add session summaries** - after each agent session, save a
+  one-paragraph summary of what was done and why
++ **Create a lessons-learned file** - document common agent
+  mistakes and their corrections
++ **Index code reviews** - store PR review feedback so agents learn
+  from past mistakes
++ **Connect ADRs** - make architecture decision records available
+  via MCP server
++ **Build a knowledge graph** - map relationships between files,
+  modules, and team members
+
+**Checklist:** - \[ \] AGENTS.md exists and is up to date - \[ \]
+Session summaries are saved after each agent task - \[ \]
+Lessons-learned file documents common agent mistakes - \[ \] PR review
+feedback is indexed and searchable - \[ \] ADRs are accessible to agents
+via MCP - \[ \] Agent can answer "why was this changed?" for recent
+changes
+
+**Related Concepts:** Context Engineering (Chapter 5), Knowledge
+Graph (6.5) **Related Workflows:** Creating a Codebase Knowledge
+Graph (Chapter 23)
+
+
+> *"The hardest problems in agentic engineering aren’t technical.
+> They’re human."*
+> 
+
+Technology is the easy part. The hard part is how teams adopt agents
+without burning out, how review processes scale, and how the engineering
+role evolves. This section covers the human side of agentic engineering.

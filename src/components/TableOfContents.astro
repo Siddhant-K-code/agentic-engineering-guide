@@ -1,0 +1,56 @@
+---
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { headings } = Astro.props;
+const filtered = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+---
+
+{filtered.length > 0 && (
+  <aside class="hidden xl:block w-52 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] py-10 pr-6">
+    <nav class="overflow-y-auto max-h-full">
+      <span class="font-[var(--font-mono)] text-[10px] tracking-widest uppercase text-[var(--text-tertiary)] mb-3 block">
+        On this page
+      </span>
+      <ul class="space-y-1.5">
+        {filtered.map((h) => (
+          <li>
+            <a
+              href={`#${h.slug}`}
+              class:list={[
+                "block text-xs leading-relaxed transition-colors hover:text-[var(--text-primary)]",
+                h.depth === 2 ? "text-[var(--text-secondary)]" : "text-[var(--text-tertiary)] pl-3",
+              ]}
+              data-toc-link
+              data-toc-slug={h.slug}
+            >
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </aside>
+)}
+
+<script>
+  // Scroll-spy: highlight active heading in ToC
+  const tocLinks = document.querySelectorAll('[data-toc-link]');
+  if (tocLinks.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            tocLinks.forEach(link => link.classList.remove('!text-[var(--text-primary)]', 'font-medium'));
+            const active = document.querySelector(`[data-toc-slug="${entry.target.id}"]`);
+            active?.classList.add('!text-[var(--text-primary)]', 'font-medium');
+          }
+        }
+      },
+      { rootMargin: '-80px 0px -70% 0px', threshold: 0 }
+    );
+
+    document.querySelectorAll('.prose h2[id], .prose h3[id]').forEach(h => observer.observe(h));
+  }
+</script>

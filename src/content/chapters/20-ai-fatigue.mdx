@@ -1,0 +1,262 @@
+---
+title: "AI Fatigue & Sustainable Adoption"
+chapter: 20
+part: 7
+partTitle: "Team Practices"
+description: "The convergence wasn’t coincidental. Both identified the same pattern -"
+order: 120
+---
+
+## The fatigue Pattern
+In February 2026, a blog post titled "AI fatigue is real and nobody
+talks about it" hit #1 on Hacker News with 470+ points and 310+
+comments. Days earlier, Harvard Business Review published "AI Doesn’t
+Reduce Work - It Intensifies It" (February 9, 2026), based on an
+eight-month UC Berkeley Haas ethnographic study of a 200-person tech
+company.
+
+The convergence wasn’t coincidental. Both identified the same pattern:
+
+The Berkeley study found: workers felt productive, but they were
+actually juggling. AI created "a continual switching of attention,
+frequent checking of AI outputs, and a growing number of open tasks."
+Only 3% actual time savings despite feeling faster.
+
+## Five patterns from 300 engineers
+Analysis of 300+ engineer responses revealed five recurring patterns.
+
+### Pattern 1: The meditative middle is gone
+Coding has three psychological modes: 1. **Problem-solving**
+(stressful) - Understanding the problem 2. **Coding** (meditative)
+- Writing the solution 3. **Seeing it work** (dopamine) - Tests
+pass, feature works
+
+AI collapsed the meditative middle. Engineers now oscillate between
+stress and dopamine hits - the same pattern as doom-scrolling. Multiple
+engineers described missing the "flow state" of writing code by hand.
+
+### Pattern 2: Executive functioning fatigue
+Without implementation as downtime, your prefrontal cortex runs at full
+load all day. You go from hard problem to hard problem with no cognitive
+rest in between.
+
+Pre-AI:
+`[Hard decision] → [Implementation break] → [Hard decision] → [Implementation break]`
+Post-AI:
+`[Hard decision] → [Hard decision] → [Hard decision] → [Hard decision] → [Burnout]`
+
+### Pattern 3: The open source flood
+AI made contributing easier. It didn’t make contributions better.
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Metric], [Before AI Agents], [After AI Agents],
+  [PRs per week (maintainer)],
+  [20-25],
+  [100+],
+  [Sloppy/AI-generated PRs],
+  [~5%],
+  [~40%],
+  [Review time per PR],
+  [15 min],
+  [15 min (unchanged)],
+  [Total review time per week],
+  [5-6 hours],
+  [25+ hours],
+)
+]
+
+The review burden didn’t just increase for individuals - it scaled
+across the entire open source ecosystem.
+
+### Pattern 4: Perceived cost aversion
+AI generates a 70% solution in 1 minute. Spending 1 hour to improve it
+feels irrational. So you don’t. And tech debt accumulates at AI speed.
+
+The sunk-cost math is inverted: the AI’s time felt free, so your time
+fixing it feels expensive. Multiple engineers described shipping "good
+enough" code they knew would bite them later.
+
+### Pattern 5: The slot machine
+The variable reward schedule - sometimes it works perfectly, sometimes
+it doesn’t - is the same mechanism that makes gambling addictive.
+
+> *"It really felt like a slot machine. Maybe if I try again, this
+> feature will work. It’s only another couple of dollars…"*
+> 
+
+## Sustainable adoption framework
+Based on antirez’s (creator of Redis) framework and practitioner
+feedback, sustainable AI adoption requires deliberate boundaries between
+AI-assisted work and human-only work.
+
+The framework has four principles. First, **preserve thinking
+time.** Block 2-3 hours per day for work without AI - architecture
+design, problem decomposition, code review. This isn’t about avoiding
+AI; it’s about maintaining the cognitive skills that make AI assistance
+effective. An engineer who can’t think through a problem can’t evaluate
+whether the AI’s solution is correct.
+
+Second, **set explicit boundaries.** Define which tasks use AI and
+which don’t. Use AI for implementation, test generation, documentation,
+and mechanical refactoring. Don’t use AI for architecture decisions,
+security-critical code, or tasks where understanding the problem is more
+important than producing the solution. These boundaries should be
+team-wide, not individual - consistency reduces the cognitive load of
+deciding "should I use AI for this?"
+
+Third, **manage the reward cycle.** The variable reward schedule of
+AI assistance - sometimes it works perfectly, sometimes it doesn’t -
+triggers the same dopamine patterns as gambling. Counteract this by
+setting time limits on AI-assisted tasks. If the agent hasn’t produced
+useful output in 15 minutes, stop and do it manually. Don’t chase the
+"one more try" feeling.
+
+Fourth, **measure cognitive load, not just productivity.** A team
+that ships 50% more code but burns out in six months hasn’t gained
+anything. Track burnout indicators: overtime hours, sick days, turnover,
+and self-reported stress levels. If these metrics worsen after agent
+adoption, your adoption pace is too aggressive.
+
+## The dependency problem
+A colonoscopy study found that doctors using AI improved initially, but
+when AI was removed, performance dropped below their original baseline.
+The same pattern is emerging in software engineering. Engineers who rely
+heavily on AI assistants report that they struggle to reason through
+problems without AI, that whiteboard sessions become harder, that their
+mental models of codebases atrophy, and that their debugging skills
+decline.
+
+This isn’t hypothetical. Multiple engineers in the Hacker News
+discussion described the experience of trying to code without AI after
+months of heavy use and finding it surprisingly difficult. The muscle
+memory of problem decomposition, the intuition for debugging, the
+ability to hold a complex system in your head - these skills atrophy
+when you outsource them to an AI assistant.
+
+The dependency problem is particularly concerning for junior engineers.
+If a junior engineer learns to code with AI from day one, they may never
+develop the foundational skills that AI is augmenting. They can produce
+code, but they can’t reason about code. They can fix bugs with AI
+assistance, but they can’t debug without it. They can generate tests,
+but they can’t design a testing strategy.
+
+The engineers who handle this best deliberately practice without AI.
+Morning thinking sessions where they reason through problems on paper
+before touching a keyboard. Whiteboard-first design sessions where they
+sketch architectures before asking an agent to implement them. Regular
+"no-AI days" where they write code by hand to maintain their skills. The
+goal isn’t to avoid AI - it’s to maintain the cognitive skills that make
+AI assistance effective. An engineer who can’t reason about code can’t
+evaluate whether AI-generated code is correct.
+
+## The organizational response
+The organizational response to AI fatigue should be structural, not
+individual. Telling engineers to "take breaks" or "practice mindfulness"
+doesn’t address the root cause - the root cause is that the workflow
+generates more cognitive load than it reduces.
+
+The structural fixes are covered throughout this guide. Backpressure
+(Chapter 32) reduces the review burden by catching errors before they
+reach humans. The conductor model (Chapter 21) redefines the engineering
+role to focus on specification and judgment rather than implementation.
+The two-layer review policy (Chapter 24) focuses human attention on the
+decisions that require human intelligence. Cost budgets (Chapter 28)
+prevent the slot machine dynamic by making the cost of "one more try"
+visible.
+
+The most important organizational decision is pace. Teams that adopt
+agents gradually - starting with low-risk tasks, measuring impact,
+expanding scope based on data - experience less fatigue than teams that
+go all-in on day one. The adoption playbook (Chapter 33) provides a
+week-by-week schedule that manages this pace deliberately.
+
+## The team dynamics of AI adoption
+AI adoption changes team dynamics in ways that aren’t immediately
+obvious. Three patterns emerge repeatedly.
+
+**The expertise inversion.** In traditional teams, the most
+experienced engineers are the most productive. With agents, this isn’t
+always true. Junior engineers who are comfortable with AI tools
+sometimes outproduce senior engineers who resist them. This creates
+tension - the senior engineer’s expertise is still valuable (for
+architecture, judgment, and mentoring), but their productivity advantage
+has narrowed. Teams need to explicitly value the senior engineer’s
+judgment contribution, not just their code output.
+
+**The review burden shift.** Before agents, code review was
+distributed across the team. With agents, the review burden concentrates
+on the engineers who are best at evaluating AI output - typically the
+most senior engineers. This creates a bottleneck and a burnout risk. The
+fix is the two-layer review policy (Chapter 24), which automates the
+mechanical review and focuses human review on judgment calls.
+
+**The collaboration pattern change.** Before agents, engineers
+collaborated through pair programming, code reviews, and design
+discussions. With agents, collaboration increasingly happens through
+shared specifications, shared AGENTS.md files, and shared review of
+agent output. The social dynamics of engineering work change - there’s
+less real-time collaboration and more asynchronous review. Teams need to
+deliberately create opportunities for synchronous collaboration (design
+sessions, architecture reviews, pair debugging) to maintain team
+cohesion.
+
+## The engineering fix: Backpressure
+The fatigue isn’t a people problem. It’s a systems problem. The fix is
+**backpressure** - automated feedback that catches agent mistakes
+before they reach a human.
+
+**The heuristic:** If your agent can complete a full iteration
+cycle (edit -\> build -\> test -\> feedback) in under 2 minutes, you’re
+in a good range. Over 5 minutes, you’re losing too much to wait time.
+Under 30 seconds, check that your tests are catching real issues.
+
+**The hierarchy of backpressure (strongest to weakest):**
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Layer], [What It Catches], [Agent Self-Correction Rate],
+  [Type system (strict TS, Rust, Go)],
+  [Wrong types, missing fields, impossible states],
+  [~95%],
+  [Test suite (fast, \< 2 min)],
+  [Regressions, logic errors],
+  [~80%],
+  [Linters + pre-commit hooks],
+  [Style, dead code, imports],
+  [~99%],
+  [Architecture enforcement (ArchUnit)],
+  [Boundary violations, circular deps],
+  [~90%],
+  [Visual verification (Playwright)],
+  [UI regressions],
+  [~70%],
+  [Human review],
+  [Judgment calls, architecture fit],
+  [N/A],
+)
+]
+
+Human review should be last, not first. By the time code reaches you,
+the trivial issues should already be resolved.
+
+**Full implementation:** Chapter 32 covers backpressure in depth
+with deployment scripts and tuning guidance.
+
+## Checklist: Preventing AI fatigue on your team
+- ☐ Backpressure pipeline is deployed (type checks, tests, lint run
+  before human review)
+- ☐ Agents self-correct on automated check failures (max 5 iterations)
+- ☐ Morning no-AI sessions are scheduled (1-2 hours of manual coding)
+- ☐ Agent tasks are specced with clear acceptance criteria
+- ☐ Weekly review of agent acceptance rate and human review time
+- ☐ Team has a shared channel for agent wins and failures
+- ☐ Agent scope is limited to tasks with clear verification criteria
+
+**Related Concepts:** Review Burden (20.2), The Conductor Model
+(21.1), Backpressure (Chapter 32) **Related Practices:**
+Introducing Agents to a Skeptical Team (Chapter 24)

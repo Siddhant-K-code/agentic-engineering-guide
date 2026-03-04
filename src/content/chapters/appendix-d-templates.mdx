@@ -1,0 +1,268 @@
+---
+title: "Appendix D: Templates & Checklists"
+description: "Header section - Start with the project name, a one-sentence description, and the tech stack (language, framework, database, deployment target). This gives the agent immediate cont"
+order: 203
+---
+
+## Template: AGENTS.md for a new project
+A good AGENTS.md follows this structure. Copy it, fill in the blanks,
+and commit it to your repository root.
+
+**Header section:** Start with the project name, a one-sentence
+description, and the tech stack (language, framework, database,
+deployment target). This gives the agent immediate context about what
+kind of project it’s working with.
+
+**Quick start section:** List the exact commands for installing
+dependencies, starting the development server, running tests, building
+for production, and running linters. Use the exact commands - not "run
+the test suite" but "npm test" or "pytest tests/ -v". Agents execute
+these commands literally.
+
+**Architecture section:** Describe the directory structure with
+one-line purpose annotations. For a typical web application: src/api
+contains route handlers, src/services contains business logic,
+src/models contains database models, src/middleware contains Express
+middleware, tests/ mirrors the src/ structure. Include the key
+architectural decisions - "we use the repository pattern for database
+access," "all API responses follow the JSON:API spec," "errors are
+handled with Result types, not try/catch."
+
+**Code conventions section:** List the specific rules the agent
+must follow. TypeScript strict mode, no any types, single quotes, no
+semicolons, functional patterns preferred over classes, all exported
+functions must have JSDoc comments. Be explicit - agents follow rules
+literally, so "use good naming" is useless while "use camelCase for
+variables, PascalCase for types, SCREAMING\_SNAKE\_CASE for constants"
+is actionable.
+
+**Testing requirements section:** Specify what tests are required
+for different types of changes. New features require unit tests. API
+changes require integration tests. Bug fixes require a regression test
+that reproduces the bug. Minimum 80% code coverage for new files. Tests
+must pass in CI before merge.
+
+**Security notes section:** List the things the agent must never
+do. Never modify files in /config/secrets/. Never commit .env files. All
+API calls must go through the gateway. Database queries must use
+parameterized queries. Never log sensitive data (passwords, tokens,
+PII).
+
+**Common patterns section:** Provide step-by-step instructions for
+recurring tasks. "To add a new API endpoint: 1. Create a route handler
+in src/api/. 2. Create a service in src/services/. 3. Add the route to
+src/api/index.ts. 4. Write tests in tests/api/. 5. Update the OpenAPI
+spec in docs/api.yaml."
+
+**Known issues section:** Document gotchas that agents should be
+aware of. "The payment service has a 5-second timeout that can’t be
+changed. Tests for the notification service require a running Redis
+instance. The legacy auth module uses callbacks, not promises - don’t
+try to convert it."
+
+## Template: Agent onboarding checklist
+Use this checklist when onboarding a new team to agent-assisted
+development.
+
+**Infrastructure readiness:** - AGENTS.md exists in every active
+repository - CI pipeline runs in under 5 minutes - Test suite runs in
+under 2 minutes - TypeScript strict mode (or equivalent) is enabled -
+ESLint/Prettier (or equivalent) is configured with strict rules -
+Pre-commit hooks are installed and enforced - Cost tracking is
+configured (per-session limits, daily dashboard)
+
+**Security readiness:** - Agent permissions are scoped (read-only
+for analysis, read-write for development) - Agents run in sandboxed
+environments (ephemeral containers or VMs) - Network access is
+restricted to allowlisted domains - Secrets are not accessible to agents
+(stored in vault, not in environment) - Kill switch is configured and
+tested - Audit logging captures all agent actions
+
+**Team readiness:** - At least one engineer has completed a week of
+agent-assisted development - Team has reviewed the conductor model
+(Chapter 21) - Review guidelines are documented (what to check in agent
+PRs) - Escalation path is defined (what to do when an agent produces bad
+output) - Weekly review cadence is established (review metrics, adjust
+backpressure)
+
+**Measurement readiness:** - Baseline metrics are captured (current
+cycle time, review time, defect rate) - Agent task logging is configured
+(timestamp, task, model, cost, outcome) - Weekly summary report is
+automated - Success criteria are defined ("reduce review turnaround from
+48h to 4h")
+
+## Template: Monthly agent review
+Run this review on the first Monday of each month. It takes 30 minutes
+and keeps your agent adoption on track.
+
+**Effectiveness review:** What was the task completion rate this
+month? (Target: above 75%.) What was the first-attempt success rate?
+(Target: above 60%.) What types of tasks had the lowest success rates?
+(These need better AGENTS.md coverage or should be removed from agent
+scope.) What types of tasks had the highest success rates? (These can be
+expanded.)
+
+**Cost review:** What was the total agent spend this month? What
+was the cost per completed task? (Target: declining month over month.)
+Which models consumed the most tokens? Are there tasks currently routed
+to expensive models that could use cheaper ones? Were there any cost
+spikes? (Investigate runaway sessions.)
+
+**Quality review:** What was the defect rate in agent-generated
+code? (Compare to human-generated code.) Were there any incidents caused
+by agent output? (Review post-incident reports.) What was the human
+override rate? (Target: below 15%.) Are there patterns in the overrides?
+(These indicate gaps in backpressure.)
+
+**Team review:** How is the team feeling about agent adoption?
+(Watch for fatigue signals.) Are engineers using the conductor model
+effectively? (Watch for micromanaging or rubber-stamping.) Are there
+skill gaps? (Schedule training if needed.) Is the AGENTS.md up to date?
+(It should be updated at least monthly.)
+
+**Action items:** Based on the review, identify three specific
+actions for the next month. Examples: "Add architecture enforcement
+rules for the payments service," "Route test generation tasks to Sonnet
+4.6 instead of Opus 4.6," "Update AGENTS.md with the new error handling
+pattern."
+
+## Template: Agent task specification
+Use this template when delegating tasks to agents. Fill in each section
+before starting the agent.
+
+**Task:** \[One sentence describing what should be different when
+the task is complete\]
+
+**Context:** \[What the agent needs to know - relevant files,
+dependencies, related systems, recent changes\]
+
+**Constraints:** \[What the agent should NOT do - files to avoid,
+patterns to follow, dependencies not to add\]
+
+**Verification:** \[How to verify the task is complete - tests to
+pass, behavior to check, output to validate\]
+
+**Scope:** \[Specific files the agent should modify - be explicit
+to prevent scope creep\]
+
+**Model:** \[Which model to use - frontier for complex tasks,
+standard for routine tasks\]
+
+**Budget:** \[Maximum cost for this task - \$1 for simple, \$3 for
+medium, \$10 for complex\]
+
+## Template: Agent incident report
+Use this template for post-incident reviews of agent failures.
+
+**Incident summary:** \[One paragraph describing what happened\]
+
+**Timeline:** \[Chronological list of events - when the agent
+started, what it did, when the problem was detected, when it was
+resolved\]
+
+**Impact:** \[What was affected - files modified, systems impacted,
+data exposed, cost incurred\]
+
+**Root cause:** \[Why the agent behaved this way - was it a prompt
+issue, a context issue, a permission issue, or a model issue?\]
+
+**Detection:** \[How was the problem detected - automated alert,
+human review, user report?\]
+
+**Remediation:** \[What was done to fix the immediate problem -
+reverted changes, restored data, rotated credentials\]
+
+**Prevention:** \[What structural changes will prevent recurrence -
+updated permissions, new backpressure rules, modified AGENTS.md, new
+eval test cases\]
+
+**Follow-up items:** \[Specific actions with owners and deadlines\]
+
+## Template: Weekly agent metrics report
+Generate this report every Monday. It takes 10 minutes and keeps the
+team informed.
+
+**This week’s numbers:** - Total agent tasks: \[count\] -
+Acceptance rate: \[percentage\] (target: \>75%) - First-attempt success
+rate: \[percentage\] (target: \>60%) - Total cost:
+\[amount\] - Cost per completed task: \[amount\]
+(target: declining) - Average human review time: \[minutes\] (target:
+declining)
+
+**Trends:** \[Are metrics improving, stable, or declining?
+Highlight any metric that moved more than 10% in either direction\]
+
+**Notable events:** \[Any incidents, cost spikes, or significant
+wins\]
+
+**Action items from last week:** \[Status of each - completed, in
+progress, or blocked\]
+
+**Action items for this week:** \[1-3 specific, actionable items\]
+
+## Template: Agent permission request
+Use this template when an agent needs permissions beyond its current
+scope.
+
+**Requesting engineer:** \[Name\]
+
+**Agent identifier:** \[Agent name or session ID\]
+
+**Current permission level:** \[Read-only / Development / CI-CD /
+Operations\]
+
+**Requested permission:** \[Specific permission being requested -
+e.g., "write access to infrastructure/terraform/"\]
+
+**Justification:** \[Why the agent needs this permission - what
+task requires it, why the current permissions are insufficient\]
+
+**Duration:** \[How long the permission is needed - one session,
+one sprint, permanent\]
+
+**Risk assessment:** \[What could go wrong if the agent misuses
+this permission, and what mitigations are in place\]
+
+**Approval:** \[Name of approver, date\]
+
+This template creates an audit trail for permission changes and forces
+the requesting engineer to think about the risk implications before
+requesting elevated permissions.
+
+## Template: Agent evaluation rubric
+Use this rubric when evaluating agent output quality. Score each
+dimension 1-5.
+
+**Correctness (1-5):** Does the output do what was requested? Does
+it handle edge cases? Does it produce the expected behavior?
+
+**Code quality (1-5):** Does the output follow the project’s
+conventions? Is it readable? Is it maintainable? Would you be
+comfortable maintaining this code?
+
+**Completeness (1-5):** Does the output include everything needed -
+implementation, tests, documentation updates, error handling? Are there
+missing pieces that the reviewer needs to add?
+
+**Efficiency (1-5):** Is the output efficient in terms of runtime
+performance, token consumption, and human review time? Could the same
+result have been achieved with less code or fewer tool calls?
+
+**Safety (1-5):** Does the output follow security best practices?
+Does it handle sensitive data appropriately? Does it respect the agent’s
+permission boundaries?
+
+**Total score:** \[Sum of all dimensions, out of 25\]
+
+Scores below 15 indicate the task type needs better AGENTS.md coverage
+or should be removed from agent scope. Scores above 20 indicate the task
+type is well-suited for agent delegation. Track scores over time to
+measure improvement.
+
+
+# Disclaimer
+*The views and opinions expressed in this guide are the author’s own and do not represent the views, policies, or positions of any employer, past or present. This guide was written entirely on personal time using publicly available information. It does not contain any proprietary, confidential, or trade-secret information from any employer or client.*
+
+*All references to companies, products, open-source projects, and services are based on publicly available documentation, published research, and the author’s personal experience. No insider knowledge or non-public information was used.*
+
+*This guide is provided for informational and educational purposes only. It does not constitute professional advice — legal, financial, security, or otherwise. Readers should evaluate the applicability of any recommendation to their own context and consult qualified professionals where appropriate.*

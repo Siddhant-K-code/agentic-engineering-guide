@@ -1,0 +1,165 @@
+---
+title: "Agent-to-Agent Communication (A2A)"
+chapter: 12
+part: 4
+partTitle: "Protocols & Standards"
+description: "The use cases are growing rapidly. An orchestrator agent delegates subtasks to specialist agents - one for code generation, one for testing, one for documentation. A code review ag"
+order: 112
+---
+
+## Why agents need to talk to each other
+MCP connects agents to tools. But what happens when agents need to
+coordinate with other agents? This is a different problem. Tool
+integration is synchronous and stateless - the agent calls a tool, gets
+a result, and moves on. Agent-to-agent communication is asynchronous and
+stateful - one agent delegates a task to another, the second agent works
+on it for minutes or hours, and the first agent needs to track progress,
+handle failures, and integrate the result.
+
+The use cases are growing rapidly. An orchestrator agent delegates
+subtasks to specialist agents - one for code generation, one for
+testing, one for documentation. A code review agent requests a security
+scan from a security agent and waits for the results before completing
+its review. A customer support agent escalates to a billing agent when
+the conversation involves payment issues. Multiple agents collaborate on
+a complex task, each contributing expertise in a different domain.
+
+Without a standard protocol, each of these interactions requires custom
+integration code. Agent A needs to know how to call Agent B, what format
+to send the request in, how to track the task, and how to handle
+failures. Multiply this by every pair of agents in your system and you
+have an N-squared integration problem - the same problem that MCP solved
+for tool integration.
+
+## Google’s A2A protocol
+Google launched the
+[Agent2Agent (A2A)](https://github.com/google/A2A) protocol in
+2025 to solve this problem. A2A enables secure, interoperable
+communication between agents regardless of their underlying framework.
+It defines a standard for capability discovery (how agents find each
+other and learn what they can do), task delegation (how one agent
+assigns work to another), progress tracking (how the delegating agent
+monitors progress), and result delivery (how the completing agent
+returns its output).
+
+### Agent card (capability discovery)
+Every A2A-compatible agent publishes an "Agent Card" - a JSON document
+describing its capabilities, input/output schemas, authentication
+requirements, and endpoint URL. Agent Cards serve the same purpose for
+agent-to-agent communication that tool definitions serve for MCP - they
+let the calling agent understand what the target agent can do without
+prior knowledge of its implementation.
+
+## MCP vs. A2A
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Dimension], [MCP], [A2A],
+  [**Purpose**],
+  [Agent ↔ Tool],
+  [Agent ↔ Agent],
+  [**Communication**],
+  [Synchronous (request/response)],
+  [Async (task lifecycle)],
+  [**Discovery**],
+  [Tool definitions],
+  [Agent Cards],
+  [**State**],
+  [Stateless],
+  [Stateful (task tracking)],
+  [**Duration**],
+  [Milliseconds],
+  [Minutes to hours],
+  [**Feedback**],
+  [Single response],
+  [Streaming updates],
+)
+]
+
+They’re complementary, not competing.
+
+## A2A in practice
+A2A is still in early adoption, but the teams using it report several
+patterns worth noting.
+
+**Start with simple delegation.** The most common A2A pattern is a
+coding agent that delegates security review to a security-specialized
+agent. The coding agent completes its work, creates a PR, and sends an
+A2A task to the security agent: "review this PR for security issues."
+The security agent reviews the code, produces a report, and sends it
+back. The coding agent incorporates the feedback and updates the PR.
+This is a simple, linear delegation that doesn’t require complex
+coordination.
+
+**Agent discovery is the hard part.** In theory, A2A agents
+discover each other through Agent Cards. In practice, most teams
+hardcode the agent endpoints because they have a small, known set of
+agents. Dynamic discovery becomes important when you have many agents or
+when agents are provided by different teams or organizations. For most
+teams starting with A2A, hardcoded endpoints are fine.
+
+**Context passing is expensive.** When one agent delegates to
+another, it needs to pass enough context for the second agent to do its
+job. Passing too little context means the second agent can’t complete
+the task. Passing too much context wastes tokens and may include
+sensitive information the second agent shouldn’t see. The sweet spot is
+a structured handoff that includes the task description, the relevant
+files, and a summary of the first agent’s work - but not the full
+conversation history.
+
+## The protocol landscape
+Beyond MCP and A2A, several protocols are emerging:
+
+#align(center)[#table(
+  columns: 4,
+  align: (col, row) => (auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Protocol], [Sponsor], [Purpose], [Status],
+  [**MCP**],
+  [Anthropic / AAIF],
+  [Agent ↔ Tool],
+  [Production],
+  [**A2A**],
+  [Google],
+  [Agent ↔ Agent],
+  [Early adoption],
+  [**ACP**],
+  [Community],
+  [Agent Communication],
+  [Experimental],
+  [**ANP**],
+  [Community],
+  [Agent Network],
+  [Experimental],
+)
+]
+
+The likely convergence: MCP for tools, A2A for agents, with ACP/ANP
+addressing niche use cases. For engineering teams making protocol
+decisions today, the safe bet is MCP (production-ready, universally
+supported) plus A2A (early but backed by Google and gaining adoption).
+Avoid investing heavily in experimental protocols unless you have
+specific requirements they address.
+
+## Step-by-step: Setting up agent-to-agent communication
++ **Start with MCP** for tool integration - it’s production-ready
+  and widely supported
++ **Add A2A** when you need agents to delegate to each other -
+  define agent cards with capabilities
++ **Define handoff protocols** - what context is passed between
+  agents, what’s the escalation path
++ **Implement health checks** - agents should verify that
+  downstream agents are available before delegating
++ **Log all inter-agent communication** - trace IDs must propagate
+  across agent boundaries
+
+**Checklist:** - \[ \] MCP servers are configured for all external
+tools - \[ \] Agent cards define capabilities and input/output schemas -
+\[ \] Handoff protocols are documented - \[ \] Trace IDs propagate
+across agent boundaries - \[ \] Health checks verify downstream agent
+availability
+
+**Related Concepts:** MCP (11.1), Multi-Agent Systems (18.1)
+**Related Workflows:** Agent-to-Agent Communication Setup (Chapter
+23)

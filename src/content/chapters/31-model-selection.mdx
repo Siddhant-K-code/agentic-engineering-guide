@@ -1,0 +1,341 @@
+---
+title: "Model Selection & Routing"
+chapter: 31
+part: 9
+partTitle: "Production Engineering"
+description: "The reason is simple - no single model dominates across all dimensions. GPT-5.3-Codex leads on Terminal-Bench (75.1%) - the benchmark that most closely mirrors real-world agentic c"
+order: 131
+---
+
+## The end of "Pick one model"
+February 2026 saw GPT-5.3-Codex, Claude Opus 4.6 and Sonnet 4.6 with 1M
+context, Gemini 3.1 Pro, and MiniMax M2.5 all ship within fourteen days.
+The "pick one best model" era is over. Welcome to the routing era.
+
+The reason is simple: no single model dominates across all dimensions.
+GPT-5.3-Codex leads on Terminal-Bench (75.1%) - the benchmark that most
+closely mirrors real-world agentic coding tasks. Claude Opus 4.6 leads
+on SWE-bench Verified (80.8%) - the benchmark for resolving real GitHub
+issues. Gemini 3.1 Pro leads on long-context tasks with its 1M token
+window. DeepSeek V3.2 offers the best quality-per-dollar for teams that
+can self-host. Each model has a domain where it’s the best choice, and
+using the wrong model for a task means paying more for worse results.
+
+The cost difference between routing and not routing is staggering. A
+team that sends every task to Opus 4.6 at \$5/\$25 per million tokens
+spends 3-5x more than a team that routes simple tasks to Sonnet 4.6 at
+\$3/\$15 and only uses Opus for tasks that genuinely need it. Over a
+month, for a team of ten engineers, this can be the difference between
+\$3,000 and \$800 in API costs - with no difference in output quality,
+because the simple tasks don’t benefit from the more expensive model.
+
+## The model landscape (February 2026)
+#align(center)[#table(
+  columns: 5,
+  align: (col, row) => (auto,auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Model], [Best For], [Context], [Input \$/1M], [Output \$/1M],
+  [**GPT-5.2**],
+  [General reasoning, complex tasks],
+  [400K],
+  [\$1.75],
+  [\$14.00],
+  [**GPT-5.3-Codex**],
+  [Agentic coding, long-running tasks],
+  [400K],
+  [\$1.75],
+  [\$14.00],
+  [**GPT-5.2-mini**],
+  [Classification, extraction, simple tasks],
+  [400K],
+  [\$0.15],
+  [\$0.60],
+  [**Claude Opus 4.6**],
+  [Long-context, nuanced reasoning],
+  [200K (1M beta)],
+  [\$5.00],
+  [\$25.00],
+  [**Claude Sonnet 4.6**],
+  [Code generation, balanced quality/cost],
+  [200K (1M beta)],
+  [\$3.00],
+  [\$15.00],
+  [**Claude Haiku 4**],
+  [Fast, cheap, simple tasks],
+  [200K],
+  [\$1.00],
+  [\$5.00],
+  [**Gemini 3.1 Pro**],
+  [Multimodal, long context],
+  [1M],
+  [\$2.00],
+  [\$12.00],
+  [**Gemini 3 Flash**],
+  [Speed-optimized, cheap],
+  [1M],
+  [\$0.075],
+  [\$0.30],
+  [**DeepSeek V3.2**],
+  [Code, math, open-source],
+  [128K],
+  [\$0.27],
+  [\$1.10],
+  [**Qwen 3.5 397B**],
+  [Self-hosted, open-weight],
+  [128K],
+  [Self-hosted],
+  [Self-hosted],
+)
+]
+
+> Prices change frequently. The principle - route by task complexity -
+> doesn’t.
+> 
+
+## Routing architectures
+**Architecture 1: Rule-Based Routing**
+
+The simplest approach. Define rules based on task type:
+
+**Architecture 2: Cascade Routing**
+
+Cascade routing is the most cost-effective routing strategy. Instead of
+predicting which model to use upfront (which requires a classifier that
+can be wrong), cascade routing tries the cheapest model first and
+escalates to more expensive models only if the output doesn’t meet
+quality criteria.
+
+The cascade works like this: send the task to the cheapest model (e.g.,
+GPT-5.2-mini at \$0.15/\$0.60). Evaluate the output against quality
+criteria (does it compile? does it pass tests? does it match the
+expected schema?). If it passes, use it - you just completed the task at
+the lowest possible cost. If it fails, send the same task to the next
+model in the cascade (e.g., Sonnet 4.6 at \$3/\$15). Repeat until the
+output passes or you’ve exhausted the cascade.
+
+The key design decision is the quality criteria. If the criteria are too
+strict, every task escalates to the expensive model and you save
+nothing. If the criteria are too lenient, you accept low-quality output
+from cheap models. The sweet spot is criteria that catch genuine quality
+problems (compilation errors, test failures, schema violations) without
+rejecting output that’s acceptable but not perfect.
+
+```python
+class CascadeRouter:
+
+```
+
+Research from ETH Zurich (CASTER, 2026) shows cascade routing reduces
+costs by 40-60% compared to always using the best model, with less than
+2% quality degradation. The savings come from the fact that 60-70% of
+tasks are simple enough for cheap models - only the remaining 30-40%
+need to escalate.
+
+**Architecture 3: Semantic Routing**
+
+Semantic routing uses embeddings to match tasks to specialized model
+configurations. Instead of routing based on explicit rules (task type,
+complexity score), semantic routing embeds the task description and
+compares it to a set of route embeddings, each associated with a
+specific model and configuration.
+
+The advantage of semantic routing is that it handles novel task types
+gracefully. Rule-based routing requires explicit rules for every task
+type - if a new task type appears that doesn’t match any rule, it falls
+through to a default. Semantic routing matches based on meaning, so a
+task that’s semantically similar to known task types gets routed
+appropriately even if it doesn’t match any explicit rule.
+
+The disadvantage is that semantic routing is less predictable than
+rule-based routing. The same task might be routed to different models on
+different runs if the embeddings are close to the boundary between
+routes. For production systems, combine semantic routing with explicit
+overrides - use semantic routing as the default, but allow explicit
+rules to override it for task types where you know the best model.
+
+Use embeddings to match queries to specialized routes:
+
+**Architecture 4: CASTER (Context-Aware Strategy for Task
+Efficient Routing)**
+
+The state of the art from January 2026. Uses dual signals - semantic
+embeddings plus structural meta-features - to estimate task difficulty
+and route accordingly. Reduces inference costs by up to 72.4% while
+matching strong-model success rates.
+
+## The model selection decision tree
+Choosing the right model for a task comes down to four questions, asked
+in order.
+
+**Question 1: Does the task require reasoning across multiple
+files or systems?** If yes, you need a frontier model - Claude Opus 4.6,
+GPT-5.2, or Gemini 3.1 Pro. Multi-file refactoring, architectural
+changes, and complex feature implementation require the kind of deep
+reasoning that only frontier models handle reliably. If no, move to
+question 2.
+
+**Question 2: Does the task require code generation or
+modification?** If yes, use a mid-tier coding model - Claude Sonnet 4.6
+or GPT-5.2 (which is cost-effective enough for most coding tasks).
+Single-file changes, test generation, bug fixes, and documentation
+updates fall here. These models handle 80% of coding tasks at a fraction
+of frontier model cost. If no, move to question 3.
+
+**Question 3: Is the task primarily text processing -
+summarization, classification, or extraction?** If yes, use a lightweight
+model - DeepSeek V3.2, Gemini 3.1 Flash, or a self-hosted open-source
+model. These tasks don’t need frontier reasoning, and running them on
+expensive models wastes money. If no, move to question 4.
+
+**Question 4: Does the task involve sensitive data that can’t
+leave your infrastructure?** If yes, use a self-hosted open-source model
+regardless of task complexity. Data sovereignty trumps model capability.
+Qwen 3.5 397B and Llama 4 are the strongest self-hosted options as of
+February 2026. If no, default to the mid-tier model and let cascade
+routing escalate if needed.
+
+The decision tree produces a default assignment. Cascade routing refines
+it at runtime - if the mid-tier model fails validation on a specific
+task, the system automatically escalates to a frontier model. Over time,
+your routing rules become more precise as you accumulate data on which
+tasks each model handles well.
+
+## Fallback chains
+Always have a fallback. Models go down, rate limits hit, and APIs fail.
+A production agent system without fallback chains is a single point of
+failure - when your primary model provider has an outage (and they all
+do, regularly), your entire agent system stops working.
+
+A well-designed fallback chain has three properties. First, it’s ordered
+by preference - the best model for the task is tried first, with
+progressively less optimal (but still acceptable) alternatives. Second,
+it’s fast - the fallback should trigger within seconds of a failure, not
+minutes. Third, it’s transparent - the agent should know which model
+it’s using and adjust its behavior accordingly (a fallback to a less
+capable model might need more explicit instructions).
+
+The most common fallback pattern is provider-level: if OpenAI is down,
+fall back to Anthropic. If Anthropic is down, fall back to Google. This
+requires that your agent framework is model-agnostic - it should work
+with any provider through an abstraction layer like LiteLLM or
+OpenRouter. If your agent is hardcoded to a single provider’s API, you
+can’t fall back.
+
+A more sophisticated pattern is quality-aware fallback: if the primary
+model produces output that fails validation (invalid JSON, missing
+fields, incorrect tool calls), automatically retry with a different
+model. Some models are better at certain tasks than others, and a task
+that one model struggles with might be easy for another.
+
+## Fine-Tuning vs. prompting vs. RAG
+When to use each approach:
+
+#align(center)[#table(
+  columns: 5,
+  align: (col, row) => (auto,auto,auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Approach], [Best When], [Cost], [Latency], [Maintenance],
+  [**Prompting**],
+  [Task is well-defined, few-shot examples work],
+  [Low (per-call)],
+  [Low],
+  [Low],
+  [**RAG**],
+  [Need access to external/changing knowledge],
+  [Medium],
+  [Medium],
+  [Medium],
+  [**Fine-tuning**],
+  [High volume of similar tasks, need consistency],
+  [High (upfront)],
+  [Low],
+  [High],
+  [**Prompt + RAG**],
+  [Complex tasks with knowledge requirements],
+  [Medium],
+  [Medium],
+  [Medium],
+  [**Fine-tuned + RAG**],
+  [Production systems with strict quality needs],
+  [High],
+  [Low],
+  [High],
+)
+]
+
+**Rule of thumb:** Start with prompting. Add RAG when you need
+external knowledge. Fine-tune only when you have 1000+ examples and the
+task is stable.
+
+## Open-Source vs. proprietary models
+The open-source model landscape has matured significantly. DeepSeek
+V3.2, Qwen 3.5 397B, and Llama 4 are competitive with proprietary models
+on many tasks, and they offer advantages that proprietary models can’t
+match: data sovereignty (your data never leaves your infrastructure),
+cost predictability (no per-token charges after the initial hardware
+investment), and customizability (you can fine-tune on your specific
+data).
+
+The trade-offs are real, though. Self-hosting requires GPU
+infrastructure - a single Qwen 3.5 397B instance needs multiple A100 or
+H100 GPUs, which cost \$20,000-50,000 per month in cloud compute. You
+need ML engineering expertise to manage inference servers, handle model
+updates, and optimize performance. And open-source models still lag
+proprietary models on the hardest tasks - the gap has narrowed, but it
+hasn’t closed.
+
+The practical decision framework: use proprietary models (via API) for
+tasks where quality matters most and volume is moderate. Use open-source
+models (self-hosted) for tasks where volume is high, quality
+requirements are moderate, and data sovereignty is important. Use a
+hybrid approach - proprietary for hard tasks, open-source for easy tasks
+- when you want to optimize cost without sacrificing quality on the
+tasks that matter.
+
+For most engineering teams, the hybrid approach is the right answer.
+Route simple tasks (test generation, documentation, lint fixes) to a
+self-hosted open-source model. Route complex tasks (feature
+implementation, architectural refactoring, security review) to a
+proprietary frontier model. The cost savings from routing simple tasks
+to open-source models can fund the proprietary model usage for complex
+tasks.
+
+## Model evaluation for your use case
+Don’t trust public benchmarks to tell you which model is best for your
+use case. Run your own evaluation. Take 20-30 representative tasks from
+your actual workload, run them against 3-4 candidate models, and compare
+the results on three dimensions: quality (does the output meet your
+standards?), cost (how much did it cost?), and latency (how long did it
+take?).
+
+The evaluation should be blind - the reviewer shouldn’t know which model
+produced which output. This prevents bias toward the model you expect to
+be best. Score each output on a 1-5 scale for quality, record the cost
+and latency, and calculate the quality-per-dollar ratio. The model with
+the best quality-per-dollar ratio for your specific tasks is the right
+choice - not the model with the highest benchmark score.
+
+Repeat this evaluation quarterly. Model capabilities change with every
+update, and the best model for your use case in January may not be the
+best model in April.
+
+## Step-by-step: Setting up model routing
++ **Classify your tasks** - list the 5-10 most common agent task
+  types (code generation, review, testing, etc.)
++ **Benchmark each model** on your actual tasks - run 20 examples
+  per task type, measure quality and cost
++ **Deploy `RuleBasedRouter`** (above) with your best model
+  assignments
++ **Add cascade routing** for tasks where quality is hard to
+  predict - try cheap first, escalate if needed
++ **Monitor weekly** - track cost per task type and quality scores,
+  adjust routing rules
+
+**Checklist:** - \[ \] Task types are classified and documented -
+\[ \] Each task type has a default model assignment - \[ \] Cascade
+routing is configured for uncertain tasks - \[ \] Weekly
+cost-per-task-type report is generated - \[ \] Routing rules are
+reviewed monthly
+
+**Related Concepts:** Context Engineering (Chapter 5), Cost Control
+(Chapter 28), Enterprise Strategy (Chapter 27)

@@ -1,0 +1,291 @@
+---
+title: "Zanzibar for AI Agents"
+chapter: 8
+part: 3
+partTitle: "Security & Authorization"
+description: "The key insight is Relationship-Based Access Control (ReBAC). Instead of assigning permissions directly to users (as in traditional RBAC), you define relationships between entities"
+order: 108
+---
+
+## What is zanzibar?
+Zanzibar is Google’s global authorization system, described in a
+[2019 paper by Pang et al.](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/)
+It handles permission checks for Google Drive, Google Cloud, YouTube,
+and virtually every Google product - millions of permission checks per
+second, with global consistency across data centers and sub-millisecond
+latency for most checks.
+
+The key insight is Relationship-Based Access Control (ReBAC). Instead of
+assigning permissions directly to users (as in traditional RBAC), you
+define relationships between entities. "Bob is a viewer of
+folder:finance." "folder:finance is the parent of document:budget." Then
+you define rules that derive permissions from relationships: "viewers of
+a folder can view documents in that folder."
+
+Now you can check: "Can Bob view the budget document?" The system traces
+the relationships: Bob is a viewer of folder:finance, folder:finance is
+parent of document:budget, viewers of a folder can view documents in
+that folder, therefore Bob can view document:budget.
+
+This is more powerful than RBAC because it handles inheritance
+(permissions flow through relationships), delegation (Bob can grant
+Alice viewer access to his folder), and context-dependence (permissions
+can depend on time, location, or other conditions). These are exactly
+the properties that agent authorization needs.
+
+## Why agents need Zanzibar
+AI agents have authorization requirements that are more complex than
+human users. A human developer has a relatively stable set of
+permissions - they can access certain repositories, certain
+environments, certain tools. An agent’s permissions need to be dynamic,
+context-dependent, and delegatable. The same agent might need different
+permissions for different tasks, different permissions at different
+stages of a task, and the ability to delegate a subset of its
+permissions to sub-agents.
+
+Traditional RBAC (Role-Based Access Control) can’t express these
+requirements. RBAC assigns permissions to roles, and roles to users. It
+works when permissions are static and coarse-grained - "developers can
+access the development environment." It breaks when permissions need to
+be fine-grained ("this agent can read files in src/ but not in
+config/secrets/"), context-dependent ("this agent can access production
+logs only during an active incident"), or delegatable ("this
+orchestrator agent can grant its sub-agents read access to the files
+it’s working on, but not write access").
+
+Zanzibar’s relationship-based model handles all of these naturally.
+Fine-grained access is expressed as relationships between agents and
+specific resources. Context-dependence is expressed as conditional
+tuples - relationships that are true only under certain conditions.
+Delegation is expressed as relationship chains - an agent can grant
+relationships that are subsets of its own.
+
+### Fine-Grained tool access
+It’s not enough to say "the agent can use the filesystem." You need to
+specify which directories, which operations, and under what conditions.
+
+### Dynamic, context-dependent permissions
+Agent permissions often depend on context:
+
+#align(center)[#table(
+  columns: 2,
+  align: (col, row) => (auto,auto,).at(col),
+  inset: 6pt,
+  [Condition], [Permission],
+  [During business hours],
+  [Can access production data],
+  [Rate limit not exceeded],
+  [Can make API calls],
+  [Human approved the session],
+  [Can execute commands],
+  [Task is code review (not deployment)],
+  [Read-only access],
+)
+]
+
+Zanzibar’s model supports contextual tuples - permissions that are true
+only under certain conditions.
+
+### Delegation chains
+In multi-agent systems, agents delegate tasks to other agents. The
+sub-agent should only have a subset of the parent agent’s permissions.
+
+## OpenFGA: Open-source Zanzibar
+[OpenFGA](https://openfga.dev) is the open-source implementation
+of Zanzibar, a
+[CNCF Incubating](https://www.cncf.io/projects/openfga/) project
+used by Okta, Twitch, and Canonical.
+
+### Authorization model for agents
+### Permission checks in code
+## Capability tokens
+For distributed agent systems, capability tokens encode permissions in a
+portable format:
+
+Key properties: - **Time-bound** - Tokens expire. No permanent
+access. - **Scope-limited** - Only the permissions needed for the
+task. - **Delegatable** - Agents can delegate subsets of their
+capabilities. - **Auditable** - Every token issuance and use is
+logged.
+
+## Performance at scale
+OpenFGA benchmarks for agent authorization:
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Scale], [Latency (p99)], [Throughput],
+  [10K checks/sec],
+  [\< 1ms],
+  [✅],
+  [100K checks/sec],
+  [\< 5ms],
+  [✅],
+  [1M checks/sec],
+  [\< 10ms],
+  [✅ (with caching)],
+)
+]
+
+Authorization checks add negligible overhead to agent operations.
+There’s no performance excuse for skipping authorization. A typical
+agent session makes 20-50 tool calls. At 5ms per authorization check,
+that’s 100-250ms of total authorization overhead across the entire
+session - invisible compared to the seconds spent on LLM calls and tool
+execution.
+
+## Implementing agent authorization: A practical guide
+Implementing Zanzibar-style authorization for agents involves three
+phases.
+
+**Phase 1: Define the authorization model.** Start by identifying
+the resource types in your system (repositories, files, directories,
+tools, environments, databases), the relationship types (owner, editor,
+viewer, executor), and the permission derivation rules (an editor of a
+repository can write files in that repository). Keep the model simple
+initially - you can add complexity later. A common mistake is
+over-engineering the authorization model before you understand your
+actual access patterns.
+
+**Phase 2: Populate the relationship store.** For each agent,
+define its relationships to resources. "Agent:code-review-bot is a
+viewer of repository:frontend." "Agent:test-generator is an editor of
+directory:tests." "Agent:deployment-bot is an executor of
+tool:deploy-staging." These relationships should be managed through a
+configuration file or API, not hardcoded in the agent’s code. When an
+agent’s scope changes, you update the relationships - you don’t redeploy
+the agent.
+
+**Phase 3: Integrate permission checks.** Before every tool call,
+check whether the agent has the required permission. The check should be
+fast (sub-millisecond with caching), fail-closed (if the authorization
+service is unavailable, deny the request), and logged (every check,
+whether allowed or denied, should appear in the audit trail). The
+integration point is typically a middleware layer in your agent
+framework that intercepts tool calls and evaluates permissions before
+forwarding them to the tool.
+
+## The principle of least privilege for agents
+The principle of least privilege - give each entity only the permissions
+it needs to do its job - is even more important for agents than for
+humans. Humans have judgment. If a human developer accidentally has
+access to a production database, they know not to run DROP TABLE. An
+agent doesn’t have that judgment. If an agent has access to a production
+database, it might run DROP TABLE if its prompt or context leads it to
+believe that’s the right action.
+
+Least privilege for agents means starting with zero permissions and
+adding only what’s needed. A code review agent needs read access to the
+repository and write access to PR comments. It doesn’t need write access
+to the repository, access to the CI/CD pipeline, or access to any
+database. A test generation agent needs read access to the source code
+and write access to the test directory. It doesn’t need access to
+production systems, deployment tools, or other repositories.
+
+The challenge is that agents often need permissions that aren’t obvious
+upfront. A code review agent might need to run the test suite to verify
+that the code works. A test generation agent might need to read the
+database schema to generate meaningful test data. These permissions
+should be added incrementally as needs are identified, not granted
+preemptively "just in case."
+
+**Related Concepts:** Agent Identity (7.2), Delegation Chains (8.2)
+**Related Workflows:** Implementing Agent Authorization with
+OpenFGA (Chapter 23)
+
+## OPA vs. OpenFGA: Choosing your policy engine
+Two authorization systems dominate enterprise discussions for agent
+security:
+[Open Policy Agent (OPA)](https://www.openpolicyagent.org) and
+[OpenFGA](https://openfga.dev). They solve overlapping but
+distinct problems.
+
+A domain architect at a major global bank described the real-world
+tension: "Our US division uses OPA. Asia Pacific is evaluating
+Zanzibar-based approaches for new projects. We need to decide."
+
+**Open Policy Agent (OPA)** is a general-purpose policy engine. You
+write policies in Rego (a declarative language), and OPA evaluates them
+against structured data:
+
+**OpenFGA** models authorization as relationships between objects.
+Instead of policies, you define a type system and relationship tuples:
+
+**When to use which:**
+
+#align(center)[#table(
+  columns: 3,
+  align: (col, row) => (auto,auto,auto,).at(col),
+  inset: 6pt,
+  [Criteria], [OPA], [OpenFGA],
+  [**Authorization model**],
+  [Attribute-based (ABAC)],
+  [Relationship-based (ReBAC)],
+  [**Policy language**],
+  [Rego (Datalog-like)],
+  [Type system + relationship tuples],
+  [**Best for**],
+  [Complex conditional policies],
+  ["Who can access what" relationships],
+  [**Agent use case**],
+  ["Can this agent do X given conditions Y?"],
+  ["Does this agent have a relationship to this resource?"],
+  [**Ecosystem**],
+  [Larger, CNCF graduated],
+  [Growing, CNCF Incubating, used by Okta/Twitch/Canonical],
+  [**Performance**],
+  [~1ms policy evaluation],
+  [~2-5ms relationship check],
+  [**Learning curve**],
+  [Rego is non-trivial],
+  [Simpler mental model],
+)
+]
+
+**The hybrid approach:** Many enterprises use both. OPA for broad
+policy decisions ("Is this action type allowed?") and OpenFGA for
+fine-grained resource access ("Does this agent have read access to this
+specific file?").
+
+The hybrid approach works well for agent systems because agents need
+both types of authorization. Policy-based decisions (OPA) handle
+questions like "Can any agent execute shell commands during off-hours?"
+or "Is this action type allowed for agents at this permission level?"
+Relationship-based decisions (OpenFGA) handle questions like "Does this
+specific agent have access to this specific repository?" or "Can this
+agent delegate read access to its sub-agent?"
+
+The integration pattern is straightforward: the agent framework checks
+OPA first (is this action type allowed?), then checks OpenFGA (does this
+agent have the required relationship to this resource?). Both checks
+must pass for the action to proceed. This two-layer authorization
+catches both policy violations (an agent trying to do something no agent
+should do) and access violations (an agent trying to access a resource
+it doesn’t have permission for).
+
+## Authorization in multi-agent systems
+Multi-agent systems introduce authorization challenges that don’t exist
+in single-agent systems. When an orchestrator agent delegates a task to
+a specialist agent, what permissions does the specialist get? The answer
+should be: a subset of the orchestrator’s permissions, scoped to the
+specific task.
+
+This is the delegation problem, and Zanzibar handles it naturally
+through relationship chains. The orchestrator has a relationship to the
+repository (editor). It creates a delegation relationship to the
+specialist (delegated\_viewer). The specialist can now read files in the
+repository but can’t write them - it has a subset of the orchestrator’s
+permissions.
+
+The delegation should be time-bound (the specialist’s permissions expire
+when the task completes), scope-limited (the specialist can only access
+the files relevant to its task), and auditable (every delegation is
+logged with the delegating agent, the receiving agent, the permissions
+granted, and the expiration time).
+
+Without proper delegation, multi-agent systems either over-privilege
+specialists (giving them the same permissions as the orchestrator, which
+violates least privilege) or under-privilege them (giving them
+insufficient permissions, which causes task failures). Zanzibar’s
+delegation model provides the right abstraction for this problem.

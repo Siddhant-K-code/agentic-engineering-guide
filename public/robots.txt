@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://siddhant-k-code.github.io/agentic-engineering-guide/sitemap-index.xml

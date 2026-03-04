@@ -1,0 +1,105 @@
+---
+title: "Measuring Agent Impact"
+chapter: 25
+part: 8
+partTitle: "Production Workflows"
+description: "The metrics that matter fall into three categories. Effectiveness metrics tell you whether agents are producing useful output - task completion rate (percentage of agent tasks that"
+order: 125
+---
+
+## Metrics that matter
+The temptation is to measure everything. Resist it. Most agent metrics
+are vanity metrics - they look impressive in a dashboard but don’t tell
+you whether agents are actually helping your team.
+
+The metrics that matter fall into three categories.
+**Effectiveness metrics** tell you whether agents are producing
+useful output: task completion rate (percentage of agent tasks that are
+accepted without major rework), first-attempt success rate (percentage
+that pass all automated checks on the first try), and human override
+rate (percentage requiring significant human intervention).
+**Efficiency metrics** tell you whether agents are saving time:
+average cycle time from task assignment to merged PR, average human
+review time per agent PR, and cost per completed task. **Quality
+metrics** tell you whether agent output is trustworthy: defect rate in
+agent-generated code compared to human-generated code, regression rate
+(previously passing tests that now fail), and post-merge bug rate.
+
+The metrics that don’t matter: lines of code generated (more isn’t
+better), number of PRs created (volume without quality is noise), and
+raw token consumption (cost per task is what matters, not total tokens).
+
+## Monthly impact reports
+Run a monthly impact report that tracks trends across these metrics. The
+report should show this month versus last month for each metric, with
+directional arrows. A healthy adoption shows task completion rate
+climbing, cost per task declining, and human review time shrinking. If
+any metric moves in the wrong direction for two consecutive months,
+investigate.
+
+The most important number in the report is the ratio of agent cost to
+human time saved. If an agent task costs \$1.50 in API fees and saves 45
+minutes of engineering time, the ROI is clear. If a task costs \$8 and
+saves 10 minutes, you should route it to a cheaper model or handle it
+manually.
+
+## Setting up measurement
+Start simple. Log every agent task with five fields: timestamp, task
+description, model used, cost, and outcome (accepted, partially
+accepted, rejected). Run a weekly summary that calculates acceptance
+rate, average cost, and total tasks. Share it in your team standup. This
+takes thirty minutes to set up and gives you the data you need to make
+informed decisions about expanding or contracting agent usage.
+
+As your adoption matures, add review time tracking (how long did the
+human spend reviewing each agent PR?) and connect it to your git metrics
+(cycle time, merge frequency). The goal is a single dashboard that
+answers: "Are agents making our team more effective, and at what cost?"
+
+## The metrics that mislead
+Some metrics that seem useful are actually misleading. Lines of code
+generated is the most common vanity metric - more lines isn’t better,
+and agents that generate verbose code are producing technical debt, not
+value. Number of PRs created measures volume, not quality - an agent
+that creates 50 PRs that all need significant rework is less valuable
+than an agent that creates 10 PRs that merge without changes. Raw token
+consumption measures cost, not efficiency - what matters is cost per
+completed task, not total tokens consumed.
+
+The most dangerous misleading metric is "time saved." Teams often
+estimate time saved by comparing how long a task would have taken
+manually versus how long it took with an agent. This estimate is almost
+always inflated because it doesn’t account for the time spent specifying
+the task, reviewing the output, fixing issues, and managing the agent. A
+task that "would have taken 2 hours manually" and "took 15 minutes with
+an agent" might actually have taken 45 minutes total when you include
+specification, review, and correction time. The real time savings is 75
+minutes, not 105 minutes.
+
+## Connecting agent metrics to Business outcomes
+The ultimate measure of agent impact isn’t engineering metrics - it’s
+business outcomes. Engineering leaders should connect agent metrics to
+the outcomes that matter to the business: time-to-market (are we
+shipping features faster?), quality (are we shipping fewer bugs?), cost
+efficiency (are we producing more output per engineering dollar?), and
+developer satisfaction (are our engineers happier and more productive?).
+
+The connection between agent metrics and business outcomes isn’t always
+direct. A 40% reduction in cycle time doesn’t automatically translate to
+40% more features shipped - there are other bottlenecks (product
+decisions, design, QA, deployment). But it does translate to faster
+iteration, which translates to faster learning, which translates to
+better products. The key is to measure the business outcomes alongside
+the engineering metrics and look for correlations over time.
+
+**Related Concepts:** AI Fatigue (20.1), Conductor Model (21.1),
+Maturity Model (22.1)
+
+
+> *"The difference between a demo and a production agent is 10x the
+> code, 100x the testing, and 1000x the operational discipline."*
+> 
+
+This section covers the engineering practices that separate prototype
+agents from production systems: evaluation, enterprise adoption, cost
+control, governance, structured outputs, and model routing.

@@ -1,0 +1,87 @@
+---
+import { groupByPart, type ChapterMeta } from "../lib/chapters";
+
+interface Props {
+  chapters: ChapterMeta[];
+  currentSlug: string;
+}
+
+const { chapters, currentSlug } = Astro.props;
+const groups = groupByPart(chapters);
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+
+<!-- Mobile overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden hidden"></div>
+
+<aside
+  id="sidebar"
+  class="fixed top-14 left-0 z-40 w-64 h-[calc(100vh-3.5rem)] bg-[var(--bg-secondary)] border-r border-[var(--border-subtle)] overflow-y-auto -translate-x-full lg:translate-x-0 transition-transform duration-200"
+>
+  <nav class="py-4 px-3">
+    {groups.map((group) => (
+      <div class="mb-4">
+        {group.part > 0 && group.part < 99 && (
+          <div class="px-2 pt-3 pb-1.5">
+            <span class="font-[var(--font-mono)] text-[10px] tracking-widest uppercase text-[var(--text-tertiary)]">
+              Part {group.part}
+            </span>
+            <span class="block text-xs font-medium text-[var(--text-secondary)] mt-0.5">
+              {group.title}
+            </span>
+          </div>
+        )}
+        {group.part === 99 && (
+          <div class="px-2 pt-3 pb-1.5 border-t border-[var(--border-subtle)] mt-2">
+            <span class="font-[var(--font-mono)] text-[10px] tracking-widest uppercase text-[var(--text-tertiary)]">
+              {group.title}
+            </span>
+          </div>
+        )}
+        <ul>
+          {group.chapters.map((ch) => {
+            const isActive = ch.slug === currentSlug;
+            return (
+              <li>
+                <a
+                  href={`${base}/${ch.slug}/`}
+                  class:list={[
+                    "flex items-start gap-2 px-2 py-1.5 text-sm rounded-md transition-colors",
+                    isActive
+                      ? "text-[var(--text-primary)] bg-[var(--bg-hover)] border-l-2 border-[var(--text-primary)] -ml-px pl-[calc(0.5rem-1px)]"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
+                  ]}
+                >
+                  {ch.chapter && (
+                    <span class="font-[var(--font-mono)] text-[11px] text-[var(--text-tertiary)] mt-0.5 shrink-0 w-5">
+                      {String(ch.chapter).padStart(2, "0")}
+                    </span>
+                  )}
+                  <span class="leading-snug">{ch.title}</span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    ))}
+  </nav>
+</aside>
+
+<script>
+  // Close sidebar on mobile when clicking a link
+  document.querySelectorAll('#sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 1024) {
+        document.getElementById('sidebar')?.classList.add('-translate-x-full');
+        document.getElementById('sidebar-overlay')?.classList.add('hidden');
+      }
+    });
+  });
+
+  // Close sidebar on overlay click
+  document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+    document.getElementById('sidebar')?.classList.add('-translate-x-full');
+    document.getElementById('sidebar-overlay')?.classList.add('hidden');
+  });
+</script>
