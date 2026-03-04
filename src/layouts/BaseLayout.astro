@@ -6,7 +6,7 @@ interface Props {
   description?: string;
 }
 
-const { title, description = "Concepts, workflows, and team practices for AI agent infrastructure. 10 Parts · 33 Chapters." } = Astro.props;
+const { title, description = "33 chapters on context engineering, agent security, cost control, and team practices for building AI agent infrastructure in production." } = Astro.props;
 const gaId = import.meta.env.PUBLIC_GA_ID || "G-XXXXXXX";
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") || "";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
