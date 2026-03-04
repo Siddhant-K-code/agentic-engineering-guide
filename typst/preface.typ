@@ -26,6 +26,6 @@ If this book saves you from one bad architectural decision, one security inciden
 
 #line(length: 100%)
 
-*Special thanks* to #link("https://www.linkedin.com/in/ramkumarkb/")[Ramkumar KB] for being an early supporter. His sponsorship funded a year-long #link("https://typst.app/")[Typst] subscription, where this book was originally written and typeset as a PDF. When I decided to launch it as a website instead, #link("https://ona.com")[Ona] made that possible - handling the entire site build and the Typst-to-web content migration.
+*Special thanks* to #link("https://www.linkedin.com/in/ramkumarkb/")[Ramkumar KB] for being an early supporter. His #link("https://github.com/sponsors/Siddhant-K-code")[GitHub Sponsorship] and a year-long #link("https://typst.app/")[Typst] subscription helped make this book possible. It was originally written and typeset as a PDF in Typst. When I decided to launch it as a website instead, #link("https://ona.com")[Ona] made that possible - handling the entire site build and the Typst-to-web content migration.
 
 _--- Siddhant Khare (February 2026)_
