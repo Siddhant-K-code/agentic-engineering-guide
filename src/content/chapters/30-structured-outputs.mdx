@@ -165,11 +165,12 @@ schema will produce unreliable output from even the best model.
 + **Test with edge cases** - empty inputs, very long inputs, inputs
   in unexpected languages
 
-**Checklist:** - \[ \] All agent tool definitions use JSON Schema
-with required fields - \[ \] Tool names are verbs (`read_file`, not
-`file`) - \[ \] Enum types are used for fixed choices - \[ \] Validation
-errors are fed back to the model for retry - \[ \] Edge case tests exist
-for each tool schema
+**Checklist:**
+- [ ] All agent tool definitions use JSON Schema with required fields
+- [ ] Tool names are verbs (`read_file`, not `file`)
+- [ ] Enum types are used for fixed choices
+- [ ] Validation errors are fed back to the model for retry
+- [ ] Edge case tests exist for each tool schema
 
-**Related Concepts:** MCP (Chapter 11), Agent Loop (Chapter 17),
-Tool Directory (Appendix A)
+
+**Related Concepts:** [MCP](/11-mcp/), [Agent Loop](/17-agent-loop/), [Tool Directory](/appendix-a-tools/) 

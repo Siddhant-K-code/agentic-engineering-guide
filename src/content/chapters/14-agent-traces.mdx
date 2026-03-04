@@ -159,11 +159,13 @@ prevents future failures.
 + **Review traces weekly** - look for patterns in failures and
   optimize context engineering
 
-**Checklist:** - \[ \] Every agent session has a unique trace ID -
-\[ \] Every LLM call logs model, tokens, and latency - \[ \] Every tool
-call logs name, duration, and success/failure - \[ \] Traces are
-searchable by session ID, user, and task type - \[ \] Alerts fire when
-cost exceeds \$5/session or duration exceeds 10 minutes
+**Checklist:**
+- [ ] Every agent session has a unique trace ID
+- [ ] Every LLM call logs model, tokens, and latency
+- [ ] Every tool call logs name, duration, and success/failure
+- [ ] Traces are searchable by session ID, user, and task type
+- [ ] Alerts fire when cost exceeds \$5/session or duration exceeds 10 minutes
+
 
 ## Choosing an observability backend
 The observability backend you choose determines what questions you can
@@ -218,6 +220,4 @@ exceed cost thresholds, sessions that exceed duration thresholds,
 sessions with unusually high error rates, and sessions that access
 unexpected resources. These alerts are your early warning system.
 
-**Related Concepts:** Cost Tracking (15.1), Incident Response
-(16.1) **Related Tools:** OpenTelemetry, Langfuse, AgentTrace,
-Maxim AI
+**Related Concepts:** [Cost Tracking](/15-cost-tracking/), [Incident Response](/16-incident-response/) **Related Tools:** OpenTelemetry, Langfuse, AgentTrace, Maxim AI 
