@@ -256,6 +256,12 @@ body {
   border-color: #ffabed;
 }
 
+/* ── Theme toggle icons ── */
+.theme-icon-sun { display: none; }
+.theme-icon-moon { display: block; }
+.dark .theme-icon-sun { display: block; }
+.dark .theme-icon-moon { display: none; }
+
 /* ── Focus visible ── */
 :focus-visible {
   outline: 2px solid var(--text-primary);
