@@ -233,6 +233,29 @@ body {
   overflow: hidden;
 }
 
+/* ── Gumroad-themed button ── */
+.gumroad-btn {
+  background-color: #ff90e8;
+  color: #000;
+  border: 1px solid #ff90e8;
+}
+
+.gumroad-btn:hover {
+  background-color: #e87dd1;
+  border-color: #e87dd1;
+}
+
+.dark .gumroad-btn {
+  background-color: #ff90e8;
+  color: #000;
+  border-color: #ff90e8;
+}
+
+.dark .gumroad-btn:hover {
+  background-color: #ffabed;
+  border-color: #ffabed;
+}
+
 /* ── Focus visible ── */
 :focus-visible {
   outline: 2px solid var(--text-primary);
