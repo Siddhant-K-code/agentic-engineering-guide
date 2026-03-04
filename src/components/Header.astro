@@ -82,8 +82,22 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 <div id="search-dialog" class="fixed inset-0 z-[100] hidden">
   <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="search-backdrop"></div>
   <div class="relative max-w-xl mx-auto mt-[15vh] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg shadow-2xl overflow-hidden">
-    <div id="search-container" class="p-4">
-      <p class="text-sm text-[var(--text-tertiary)]">Search will be available after Pagefind is configured.</p>
+    <div class="flex items-center border-b border-[var(--border)] px-4">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" class="shrink-0">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input
+        id="search-input"
+        type="text"
+        placeholder="Search chapters..."
+        autocomplete="off"
+        class="w-full bg-transparent px-3 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none"
+      />
+      <kbd class="font-[var(--font-mono)] text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-tertiary)] shrink-0">ESC</kbd>
+    </div>
+    <div id="search-results" class="max-h-[60vh] overflow-y-auto p-2">
+      <p id="search-placeholder" class="text-sm text-[var(--text-tertiary)] px-2 py-4 text-center">Type to search across all chapters</p>
     </div>
   </div>
 </div>
@@ -105,13 +119,42 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     overlay?.classList.toggle('hidden');
   });
 
-  // Search dialog
+  // Search
   const searchTrigger = document.getElementById('search-trigger');
   const searchDialog = document.getElementById('search-dialog');
   const searchBackdrop = document.getElementById('search-backdrop');
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const searchResults = document.getElementById('search-results');
+  const searchPlaceholder = document.getElementById('search-placeholder');
 
-  function openSearch() { searchDialog?.classList.remove('hidden'); }
-  function closeSearch() { searchDialog?.classList.add('hidden'); }
+  let pagefind: any = null;
+
+  async function loadPagefind() {
+    if (pagefind) return;
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+      pagefind = await import(/* @vite-ignore */ `${base}/pagefind/pagefind.js`);
+      await pagefind.init();
+    } catch (e) {
+      console.warn('Pagefind not available:', e);
+    }
+  }
+
+  function openSearch() {
+    searchDialog?.classList.remove('hidden');
+    searchInput?.focus();
+    loadPagefind();
+  }
+
+  function closeSearch() {
+    searchDialog?.classList.add('hidden');
+    if (searchInput) searchInput.value = '';
+    if (searchResults) searchResults.innerHTML = '';
+    if (searchPlaceholder) {
+      searchPlaceholder.style.display = '';
+      searchResults?.appendChild(searchPlaceholder);
+    }
+  }
 
   searchTrigger?.addEventListener('click', openSearch);
   searchBackdrop?.addEventListener('click', closeSearch);
@@ -122,5 +165,43 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       searchDialog?.classList.contains('hidden') ? openSearch() : closeSearch();
     }
     if (e.key === 'Escape') closeSearch();
+  });
+
+  let debounceTimer: ReturnType<typeof setTimeout>;
+  searchInput?.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      const query = searchInput.value.trim();
+      if (!searchResults) return;
+
+      if (!query) {
+        searchResults.innerHTML = '';
+        if (searchPlaceholder) {
+          searchPlaceholder.style.display = '';
+          searchResults.appendChild(searchPlaceholder);
+        }
+        return;
+      }
+
+      if (!pagefind) {
+        searchResults.innerHTML = '<p class="text-sm text-[var(--text-tertiary)] px-2 py-4 text-center">Search index not available. Try again after the site is built.</p>';
+        return;
+      }
+
+      const search = await pagefind.search(query);
+      const results = await Promise.all(search.results.slice(0, 10).map((r: any) => r.data()));
+
+      if (results.length === 0) {
+        searchResults.innerHTML = '<p class="text-sm text-[var(--text-tertiary)] px-2 py-4 text-center">No results found</p>';
+        return;
+      }
+
+      searchResults.innerHTML = results.map((r: any) => `
+        <a href="${r.url}" class="block px-3 py-2.5 rounded-md hover:bg-[var(--bg-hover)] transition-colors">
+          <span class="block text-sm font-medium text-[var(--text-primary)] leading-snug">${r.meta?.title || 'Untitled'}</span>
+          <span class="block text-xs text-[var(--text-tertiary)] mt-1 leading-relaxed line-clamp-2">${r.excerpt}</span>
+        </a>
+      `).join('');
+    }, 200);
   });
 </script>
