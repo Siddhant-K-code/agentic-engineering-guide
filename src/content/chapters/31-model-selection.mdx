@@ -52,6 +52,29 @@ because the simple tasks don’t benefit from the more expensive model.
 
 The simplest approach. Define rules based on task type:
 
+```python
+ROUTING_RULES = {
+    "code_generation":  "claude-sonnet-4.6",
+    "code_review":      "claude-sonnet-4.6",
+    "summarization":    "gpt-5.2-mini",
+    "translation":      "gpt-5.2-mini",
+    "data_extraction":  "gpt-5.2-mini",
+    "complex_reasoning":"claude-opus-4.6",
+    "math_proof":       "claude-opus-4.6",
+}
+
+def route(task_type: str, fallback: str = "claude-sonnet-4.6") -> str:
+    return ROUTING_RULES.get(task_type, fallback)
+```
+
+Rule-based routing works when you know your task types upfront and can
+measure which model performs best for each. The mapping is explicit,
+auditable, and cheap to evaluate. The downside: every new task type
+requires a manual decision. If your task taxonomy changes often, you
+spend more time maintaining rules than saving on inference.
+
+Start here. Most teams never need anything more complex.
+
 **Architecture 2: Cascade Routing**
 
 Cascade routing is the most cost-effective routing strategy. Instead of
