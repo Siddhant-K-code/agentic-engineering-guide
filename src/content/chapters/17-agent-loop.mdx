@@ -18,8 +18,7 @@ executes that tool, appends the result to the conversation, and sends
 everything back to the model. This continues until the model produces a
 final answer or hits a limit.
 
-![](/images/fig-agent-loop.png).],
-) 
+![The agent loop: think, act, observe, repeat.](/images/fig-agent-loop.png)
 
 The simplicity of this loop is deceptive. The engineering challenge
 isn’t the loop itself - it’s everything around it: how you manage the
@@ -190,4 +189,4 @@ approval, runs it in staging, waits for approval, and only then proposes
 the production migration. The gate configuration should be part of the
 task specification, not hardcoded in the agent framework.
 
-**Related Concepts:** [Agent Security](/07-agent-security-crisis/), [Observability](/14-agent-traces/) **Related Workflows:** [Your First Agent in Production](/23-first-agent-production/) 
+**Related Concepts:** [Agent Security](/07-agent-security-crisis/), [Agent Traces & OpenTelemetry](/14-agent-traces/) **Related Workflows:** [Your First Agent in Production](/23-first-agent-production/) 
