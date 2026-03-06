@@ -54,7 +54,7 @@ servers for your filesystem (so the agent can read and write code), your
 version control system (so it can create branches and commits), and your
 test runner (so it can execute tests and read results). If your project
 uses a database, add a read-only database MCP server using the BFMCP
-pattern (Chapter 11) — expose high-level query operations, not raw SQL.
+pattern (Chapter 11) - expose high-level query operations, not raw SQL.
 
 Start with 3-5 MCP servers. More than 10 creates tool definition bloat
 that wastes tokens on every turn (Chapter 5 covers Meta-MCP for
@@ -71,7 +71,7 @@ You cannot debug agent failures without traces. Set up OpenTelemetry
 (Chapter 14) to capture every agent session as a trace, with spans for
 each LLM call, tool call, and decision point.
 
-Configure your observability backend — Langfuse, Arize Phoenix, or
+Configure your observability backend - Langfuse, Arize Phoenix, or
 Grafana Tempo with the OpenTelemetry exporter. At minimum, every trace
 should capture:
 
@@ -90,14 +90,14 @@ Agent-generated code must pass the same quality gates as human-written
 code. Configure your CI pipeline to run the full backpressure stack
 (Chapter 32) on every agent-created pull request:
 
-1. **Type checking** — `tsc --noEmit`, `mypy`, or `go vet`
-2. **Linting** — ESLint, Ruff, or golangci-lint with strict rules
-3. **Tests** — run affected tests, not the full suite (use `--changedSince` or pytest-testmon)
-4. **Security scanning** — Semgrep or CodeQL for SAST
+1. **Type checking** - `tsc --noEmit`, `mypy`, or `go vet`
+2. **Linting** - ESLint, Ruff, or golangci-lint with strict rules
+3. **Tests** - run affected tests, not the full suite (use `--changedSince` or pytest-testmon)
+4. **Security scanning** - Semgrep or CodeQL for SAST
 
 Configure the agent to read CI failure output so it can self-correct.
 The agent should be able to push a fix and re-trigger CI without human
-intervention. Set a maximum of 3 CI retry cycles — if the agent can't
+intervention. Set a maximum of 3 CI retry cycles - if the agent can't
 pass CI after 3 attempts, escalate to a human with the full trace.
 
 ### Step 5: First run (30 minutes)
@@ -114,7 +114,7 @@ Run the agent and watch the trace in real-time. Don't intervene unless
 the agent is clearly stuck or approaching the cost cap. The goal of the
 first run is to observe the agent's behavior, not to get a perfect
 result. Note where the agent hesitates, makes wrong assumptions, or
-lacks context — these observations will inform your AGENTS.md updates.
+lacks context - these observations will inform your AGENTS.md updates.
 
 ### Step 6: Monitor and iterate (ongoing)
 After the first successful run:
