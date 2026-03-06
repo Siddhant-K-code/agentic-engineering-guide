@@ -49,14 +49,80 @@ observability:
 ```
 
 ### Step 2: Configure MCP servers (30 minutes)
+Connect the agent to the tools it needs. At minimum, configure MCP
+servers for your filesystem (so the agent can read and write code), your
+version control system (so it can create branches and commits), and your
+test runner (so it can execute tests and read results). If your project
+uses a database, add a read-only database MCP server using the BFMCP
+pattern (Chapter 11) — expose high-level query operations, not raw SQL.
+
+Start with 3-5 MCP servers. More than 10 creates tool definition bloat
+that wastes tokens on every turn (Chapter 5 covers Meta-MCP for
+compressing tool definitions). You can always add more servers later as
+the agent's scope expands.
+
+Verify each MCP server works independently before connecting it to the
+agent. Call each tool manually, confirm the response format, and check
+that error cases return structured error messages the agent can
+interpret.
+
 ### Step 3: Set up observability (45 minutes)
+You cannot debug agent failures without traces. Set up OpenTelemetry
+(Chapter 14) to capture every agent session as a trace, with spans for
+each LLM call, tool call, and decision point.
+
+Configure your observability backend — Langfuse, Arize Phoenix, or
+Grafana Tempo with the OpenTelemetry exporter. At minimum, every trace
+should capture:
+
+- **Session metadata:** session ID, task description, initiating user
+- **LLM calls:** model name, input/output token counts, latency, cost
+- **Tool calls:** tool name, arguments, response size, success/failure
+- **Cost:** cumulative cost per session, with per-call breakdown
+
+Set up two alerts from day one: one for sessions exceeding your cost cap
+(\$3 default), and one for sessions exceeding your duration limit (30
+minutes default). These catch runaway agents before they become
+expensive.
+
 ### Step 4: Configure CI/CD integration (30 minutes)
+Agent-generated code must pass the same quality gates as human-written
+code. Configure your CI pipeline to run the full backpressure stack
+(Chapter 32) on every agent-created pull request:
+
+1. **Type checking** — `tsc --noEmit`, `mypy`, or `go vet`
+2. **Linting** — ESLint, Ruff, or golangci-lint with strict rules
+3. **Tests** — run affected tests, not the full suite (use `--changedSince` or pytest-testmon)
+4. **Security scanning** — Semgrep or CodeQL for SAST
+
+Configure the agent to read CI failure output so it can self-correct.
+The agent should be able to push a fix and re-trigger CI without human
+intervention. Set a maximum of 3 CI retry cycles — if the agent can't
+pass CI after 3 attempts, escalate to a human with the full trace.
+
 ### Step 5: First run (30 minutes)
+Pick a low-risk task for the first run: a well-defined bug fix with a
+failing test, a documentation update, or adding unit tests for an
+untested function. Avoid database migrations, authentication changes, or
+public API modifications.
+
+Write a clear task specification: what the agent should do, what files
+it should touch, what tests should pass when it's done, and what it
+should not change. Vague specifications produce vague output.
+
+Run the agent and watch the trace in real-time. Don't intervene unless
+the agent is clearly stuck or approaching the cost cap. The goal of the
+first run is to observe the agent's behavior, not to get a perfect
+result. Note where the agent hesitates, makes wrong assumptions, or
+lacks context — these observations will inform your AGENTS.md updates.
+
 ### Step 6: Monitor and iterate (ongoing)
-After the first successful run: 1. Review the agent trace in your
-observability dashboard 2. Check cost and token usage 3. Identify any
-context gaps (update AGENTS.md) 4. Gradually expand to more complex
-tasks
+After the first successful run:
+
+1. Review the agent trace in your observability dashboard
+2. Check cost and token usage
+3. Identify any context gaps (update AGENTS.md)
+4. Gradually expand to more complex tasks
 
 ## Workflow: Setting up Distill for monorepo context
 **Estimated time:** 30 minutes
