@@ -9,11 +9,19 @@ interface Props {
 const { chapters, currentSlug } = Astro.props;
 const { prev, next } = getAdjacentChapters(chapters, currentSlug);
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+const prevUrl = prev ? `${base}/${prev.slug}/` : null;
+const nextUrl = next ? `${base}/${next.slug}/` : null;
 ---
 
-<nav class="mt-16 pt-8 border-t border-[var(--border)] flex justify-between gap-4">
+<nav
+  class="mt-16 pt-8 border-t border-[var(--border)] flex justify-between gap-4"
+  data-chapter-nav
+  data-prev={prevUrl}
+  data-next={nextUrl}
+>
   {prev ? (
-    <a href={`${base}/${prev.slug}/`} class="group flex flex-col items-start gap-1 max-w-[45%]">
+    <a href={prevUrl} class="group flex flex-col items-start gap-1 max-w-[45%]">
       <span class="text-xs text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] transition-colors">
         ← Previous
       </span>
@@ -23,7 +31,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     </a>
   ) : <div />}
   {next ? (
-    <a href={`${base}/${next.slug}/`} class="group flex flex-col items-end gap-1 max-w-[45%] ml-auto">
+    <a href={nextUrl} class="group flex flex-col items-end gap-1 max-w-[45%] ml-auto">
       <span class="text-xs text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] transition-colors">
         Next →
       </span>
@@ -33,3 +41,25 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     </a>
   ) : <div />}
 </nav>
+
+<script>
+  // Keyboard navigation: ArrowLeft/ArrowRight for prev/next chapter
+  const nav = document.querySelector('[data-chapter-nav]');
+  if (nav) {
+    const prevUrl = nav.getAttribute('data-prev');
+    const nextUrl = nav.getAttribute('data-next');
+
+    document.addEventListener('keydown', (e) => {
+      // Don't navigate when user is typing in an input/textarea or search is open
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if ((e.target as HTMLElement).isContentEditable) return;
+
+      if (e.key === 'ArrowLeft' && prevUrl) {
+        window.location.href = prevUrl;
+      } else if (e.key === 'ArrowRight' && nextUrl) {
+        window.location.href = nextUrl;
+      }
+    });
+  }
+</script>

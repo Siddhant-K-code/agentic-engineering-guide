@@ -4,7 +4,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 <header class="fixed top-0 left-0 right-0 z-50 h-14 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/80 backdrop-blur-md">
   <!-- Reading progress bar -->
-  <div id="reading-progress" class="absolute bottom-0 left-0 h-[1px] bg-[var(--text-tertiary)] w-full scale-x-0 origin-left"></div>
+  <div id="reading-progress" class="absolute bottom-0 left-0 h-[2px] bg-[var(--text-secondary)] w-full scale-x-0 origin-left"></div>
 
   <div class="h-full flex items-center justify-between px-4 lg:px-6">
     <!-- Left: logo + mobile menu -->
@@ -114,12 +114,28 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     localStorage.setItem('theme', isDark ? 'light' : 'dark');
   });
 
-  // Mobile sidebar toggle
+  // Mobile sidebar toggle — fade overlay in sync with slide
   document.getElementById('sidebar-toggle')?.addEventListener('click', function() {
     var sidebar = document.getElementById('sidebar');
     var overlay = document.getElementById('sidebar-overlay');
-    sidebar?.classList.toggle('-translate-x-full');
-    overlay?.classList.toggle('hidden');
+    if (!sidebar || !overlay) return;
+
+    var isHidden = sidebar.classList.contains('-translate-x-full');
+    if (isHidden) {
+      // Opening: show overlay first, then fade in
+      overlay.classList.remove('hidden');
+      requestAnimationFrame(function() {
+        overlay.classList.remove('opacity-0');
+      });
+      sidebar.classList.remove('-translate-x-full');
+    } else {
+      // Closing: fade out overlay, then hide
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('opacity-0');
+      overlay.addEventListener('transitionend', function() {
+        overlay.classList.add('hidden');
+      }, { once: true });
+    }
   });
 
   // Reading progress
@@ -169,6 +185,23 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     }
   }
 
+  var searchSelectedIndex = -1;
+
+  function updateSearchSelection() {
+    var items = searchResults ? searchResults.querySelectorAll('[data-search-result]') : [];
+    items.forEach(function(item, i) {
+      if (i === searchSelectedIndex) {
+        item.classList.add('bg-[var(--bg-hover)]');
+      } else {
+        item.classList.remove('bg-[var(--bg-hover)]');
+      }
+    });
+    // Scroll selected item into view within the results container
+    if (searchSelectedIndex >= 0 && items[searchSelectedIndex]) {
+      items[searchSelectedIndex].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
   searchTrigger?.addEventListener('click', openSearch);
   searchBackdrop?.addEventListener('click', closeSearch);
 
@@ -176,13 +209,35 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
       searchDialog?.classList.contains('hidden') ? openSearch() : closeSearch();
+      return;
     }
-    if (e.key === 'Escape') closeSearch();
+    if (e.key === 'Escape') { closeSearch(); return; }
+
+    // Arrow key navigation within search results
+    var isSearchOpen = searchDialog && !searchDialog.classList.contains('hidden');
+    if (!isSearchOpen || !searchResults) return;
+
+    var items = searchResults.querySelectorAll('[data-search-result]');
+    if (items.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      searchSelectedIndex = Math.min(searchSelectedIndex + 1, items.length - 1);
+      updateSearchSelection();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      searchSelectedIndex = Math.max(searchSelectedIndex - 1, 0);
+      updateSearchSelection();
+    } else if (e.key === 'Enter' && searchSelectedIndex >= 0 && items[searchSelectedIndex]) {
+      e.preventDefault();
+      items[searchSelectedIndex].click();
+    }
   });
 
   var debounceTimer;
   searchInput?.addEventListener('input', function() {
     clearTimeout(debounceTimer);
+    searchSelectedIndex = -1;
     debounceTimer = setTimeout(async function() {
       var query = searchInput.value.trim();
       if (!searchResults) return;
@@ -210,11 +265,20 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       }
 
       searchResults.innerHTML = results.map(function(r) {
-        return '<a href="' + r.url + '" class="block px-3 py-2.5 rounded-md hover:bg-[var(--bg-hover)] transition-colors">' +
+        return '<a href="' + r.url + '" data-search-result class="block px-3 py-2.5 rounded-md transition-colors">' +
           '<span class="block text-sm font-medium text-[var(--text-primary)] leading-snug">' + (r.meta?.title || 'Untitled') + '</span>' +
           '<span class="block text-xs text-[var(--text-tertiary)] mt-1 leading-relaxed line-clamp-2">' + (r.excerpt || '') + '</span>' +
         '</a>';
       }).join('');
+
+      // Reset selection and add hover listeners
+      searchSelectedIndex = -1;
+      searchResults.querySelectorAll('[data-search-result]').forEach(function(item, i) {
+        item.addEventListener('mouseenter', function() {
+          searchSelectedIndex = i;
+          updateSearchSelection();
+        });
+      });
     }, 200);
   });
 </script>

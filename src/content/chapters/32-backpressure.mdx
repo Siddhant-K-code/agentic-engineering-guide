@@ -180,12 +180,9 @@ Backpressure isn’t binary. It’s a dial.
 
 | Setting | Symptom | Fix |
 | --- | --- | --- |
-| **Too little** | Hallucinations pass through. Agent output looks clean but is subtly
-  wrong. Human catches logic errors. | Add more automated checks. Strengthen test coverage. |
-| **Too much** | Feedback loop is too slow. Agent waits 20 min for tests. Speed
-  advantage lost. | Parallelize checks. Run only affected tests. Cache build artifacts. |
-| **Just right** | Agent self-corrects in 1-3 iterations. Human reviews architecture and
-  judgment calls only. | Target: full cycle in < 2 minutes. |
+| **Too little** | Hallucinations pass through. Agent output looks clean but is subtly wrong. Human catches logic errors. | Add more automated checks. Strengthen test coverage. |
+| **Too much** | Feedback loop is too slow. Agent waits 20 min for tests. Speed advantage lost. | Parallelize checks. Run only affected tests. Cache build artifacts. |
+| **Just right** | Agent self-corrects in 1-3 iterations. Human reviews architecture and judgment calls only. | Target: full cycle in < 2 minutes. |
 
 ## Measuring backpressure effectiveness
 How do you know if your backpressure is working? Track three metrics.
