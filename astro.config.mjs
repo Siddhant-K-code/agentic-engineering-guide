@@ -7,11 +7,11 @@ export default defineConfig({
   site: "https://agents.siddhantkhare.com",
   base: "/",
   integrations: [mdx(), sitemap()],
+  server: {
+    allowedHosts: true,
+  },
   vite: {
     plugins: [tailwindcss()],
-    server: {
-      allowedHosts: true,
-    },
   },
   markdown: {
     shikiConfig: {
