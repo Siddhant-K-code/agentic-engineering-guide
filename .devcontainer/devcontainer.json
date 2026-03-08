@@ -1,0 +1,14 @@
+{
+	"name": "Agentic Engineering Guide",
+	"build": {
+		"context": ".",
+		"dockerfile": "Dockerfile"
+	},
+	"forwardPorts": [4321],
+	"portsAttributes": {
+		"4321": {
+			"label": "Astro Dev Server",
+			"onAutoForward": "notify"
+		}
+	}
+}
