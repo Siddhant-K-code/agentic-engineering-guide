@@ -51,6 +51,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
                       ? "text-[var(--text-primary)] font-medium bg-[var(--bg-tertiary)]"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
                   ]}
+                  {...(isActive ? { "data-active": "", "aria-current": "page" } : {})}
                 >
                   {ch.chapter && (
                     <span class="font-[var(--font-mono)] text-[11px] text-[var(--text-tertiary)] mt-0.5 shrink-0 w-5">
@@ -69,6 +70,15 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 </aside>
 
 <script>
+  // Scroll the active sidebar link into view on page load
+  const activeLink = document.querySelector('#sidebar a[data-active]');
+  if (activeLink) {
+    // Use requestAnimationFrame to ensure layout is complete before scrolling
+    requestAnimationFrame(() => {
+      activeLink.scrollIntoView({ block: 'center', behavior: 'instant' });
+    });
+  }
+
   document.querySelectorAll('#sidebar a').forEach(link => {
     link.addEventListener('click', () => {
       if (window.innerWidth < 1024) {
