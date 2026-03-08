@@ -15,14 +15,14 @@ const filtered = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
       <span class="font-[var(--font-mono)] text-[10px] tracking-widest uppercase text-[var(--text-tertiary)] mb-3 block">
         On this page
       </span>
-      <ul class="space-y-1.5">
+      <ul class="relative border-l border-[var(--border-subtle)] space-y-0.5">
         {filtered.map((h) => (
           <li>
             <a
               href={`#${h.slug}`}
               class:list={[
-                "block text-xs leading-relaxed transition-colors hover:text-[var(--text-primary)]",
-                h.depth === 2 ? "text-[var(--text-secondary)]" : "text-[var(--text-tertiary)] pl-3",
+                "block text-xs leading-relaxed transition-colors duration-150 hover:text-[var(--text-primary)] py-1 -ml-px border-l-2 border-transparent",
+                h.depth === 2 ? "text-[var(--text-secondary)] pl-3" : "text-[var(--text-tertiary)] pl-5",
               ]}
               data-toc-link
               data-toc-slug={h.slug}
@@ -69,19 +69,23 @@ const filtered = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 <script>
   const tocLinks = document.querySelectorAll('[data-toc-link]');
   if (tocLinks.length > 0) {
+    function setActiveTocLink(slug: string) {
+      tocLinks.forEach(link => {
+        link.classList.remove('!text-[var(--text-primary)]', 'font-medium', '!border-[var(--text-primary)]');
+        link.classList.add('border-transparent');
+      });
+      const active = document.querySelector(`[data-toc-slug="${slug}"]`);
+      if (active) {
+        active.classList.add('!text-[var(--text-primary)]', 'font-medium', '!border-[var(--text-primary)]');
+        active.classList.remove('border-transparent');
+      }
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            tocLinks.forEach(link => {
-              link.classList.remove('!text-[var(--text-primary)]');
-              link.classList.remove('font-medium');
-            });
-            const active = document.querySelector(`[data-toc-slug="${entry.target.id}"]`);
-            if (active) {
-              active.classList.add('!text-[var(--text-primary)]');
-              active.classList.add('font-medium');
-            }
+            setActiveTocLink(entry.target.id);
           }
         }
       },
