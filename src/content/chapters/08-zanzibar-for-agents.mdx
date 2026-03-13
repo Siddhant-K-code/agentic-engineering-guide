@@ -88,16 +88,107 @@ of Zanzibar, a
 used by Okta, Twitch, and Canonical.
 
 ### Authorization model for agents
-### Permission checks in code
-## Capability tokens
-For distributed agent systems, capability tokens encode permissions in a
-portable format:
 
-Key properties: - **Time-bound** - Tokens expire. No permanent
-access. - **Scope-limited** - Only the permissions needed for the
-task. - **Delegatable** - Agents can delegate subsets of their
-capabilities. - **Auditable** - Every token issuance and use is
-logged.
+```yaml
+# OpenFGA authorization model for AI agents
+model:
+  schema 1.1
+
+type user
+
+type agent
+  relations
+    define owner: [user]
+    define supervisor: [user, agent]
+
+type tool
+  relations
+    define can_invoke: [agent, agent#supervisor]
+    define admin: [user]
+
+type resource
+  relations
+    define reader: [agent, user]
+    define writer: [agent, user]
+    define owner: [user]
+    define can_read: reader or writer or owner
+    define can_write: writer or owner
+
+type session
+  relations
+    define agent: [agent]
+    define approved_by: [user]
+    define is_active: [session]
+```
+
+### Permission checks in code
+
+```python
+from openfga_sdk import OpenFgaClient, CheckRequest
+
+client = OpenFgaClient(api_url="http://localhost:8080")
+
+# Check: Can agent:task-123 read resource:customer-data?
+result = await client.check(CheckRequest(
+    user="agent:task-123",
+    relation="can_read",
+    object="resource:customer-data",
+    context={
+        "time": "2026-02-15T10:30:00Z",
+        "session_approved": True
+    }
+))
+
+if result.allowed:
+    # Proceed with the operation
+    data = await read_customer_data()
+else:
+    # Log the denial and escalate
+    audit_log.record_denial(
+        agent="task-123",
+        resource="customer-data",
+        reason=result.reason
+    )
+    raise PermissionDenied("Agent not authorized for this resource")
+```
+
+## Capability tokens
+For distributed agent systems, capability tokens encode permissions in a portable format:
+
+```json
+{
+  "agent_id": "agent:task-123",
+  "capabilities": [
+    {
+      "resource": "path:/workspace/src/**",
+      "actions": ["read", "write"],
+      "constraints": {
+        "max_file_size": "1MB",
+        "excluded_patterns": ["*.env", "*.key", "*.pem"]
+      }
+    },
+    {
+      "resource": "api:github.com",
+      "actions": ["read", "create_pr"],
+      "constraints": {
+        "rate_limit": "100/hour",
+        "repos": ["my-org/my-repo"]
+      }
+    }
+  ],
+  "issued_at": "2026-02-15T10:00:00Z",
+  "expires_at": "2026-02-15T11:00:00Z",
+  "delegated_by": "agent:orchestrator",
+  "delegation_depth": 1,
+  "max_delegation_depth": 2
+}
+```
+
+Key properties:
+- **Time-bound** - Tokens expire. No permanent access.
+- **Scope-limited** - Only the permissions needed for the task.
+- **Delegatable** - Agents can delegate subsets of their capabilities.
+- **Auditable** - Every token issuance and use is logged.
 
 ## Performance at scale
 OpenFGA benchmarks for agent authorization:

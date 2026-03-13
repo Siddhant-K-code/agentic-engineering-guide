@@ -122,6 +122,48 @@ MCP’s current specification has several specific security gaps:
 | No audit logging | No record of tool calls | Add logging middleware |
 
 ### Adding authorization to MCP
+
+```typescript
+// MCP server with OpenFGA authorization
+server.setRequestHandler("tools/call", async (request) => {
+  const { name, arguments: args } = request.params;
+  const agentId = request.meta?.agentId;
+
+  // Check authorization before executing
+  const allowed = await openfga.check({
+    user: `agent:${agentId}`,
+    relation: "can_invoke",
+    object: `tool:${name}`
+  });
+
+  if (!allowed) {
+    await auditLog.record({
+      agent: agentId,
+      tool: name,
+      action: "denied",
+      reason: "Not authorized",
+      timestamp: new Date()
+    });
+    throw new Error(`Agent ${agentId} is not authorized to use tool ${name}`);
+  }
+
+  // Execute the tool
+  const result = await executeTool(name, args);
+
+  // Log the successful call
+  await auditLog.record({
+    agent: agentId,
+    tool: name,
+    action: "executed",
+    args: args,
+    result_size: JSON.stringify(result).length,
+    timestamp: new Date()
+  });
+
+  return result;
+});
+```
+
 ## MCPMark: Benchmarking real-world tool use
 Not all models are equally good at using MCP tools. MCPMark (NUS TRAIL /
 LobeHub, ICLR 2026) benchmarks 127 real-world tasks across Notion,

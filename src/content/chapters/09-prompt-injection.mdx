@@ -79,6 +79,39 @@ separation, response validation), and layer textual defenses on top.
 Don’t rely on textual defenses alone - they’re the weakest layer.
 
 ### Implementation: Multi-Layer defense
+
+```python
+class PromptInjectionDefense:
+    def __init__(self):
+        self.perplexity_detector = PerplexityDetector(threshold=0.85)
+        self.pattern_matcher = PatternMatcher(patterns=KNOWN_INJECTIONS)
+        self.output_filter = OutputFilter(blocked_patterns=EXFIL_PATTERNS)
+
+    async def check_input(self, text: str) -> SafetyResult:
+        """Check input text for injection attempts."""
+        # Layer 1: Pattern matching (fast)
+        if self.pattern_matcher.matches(text):
+            return SafetyResult(safe=False, reason="Known injection pattern")
+
+        # Layer 2: Perplexity analysis (medium)
+        perplexity = self.perplexity_detector.analyze(text)
+        if perplexity > self.perplexity_detector.threshold:
+            return SafetyResult(safe=False, reason="Anomalous token sequence")
+
+        # Layer 3: Semantic analysis (slower, more accurate)
+        similarity = await self.semantic_analyzer.check(text)
+        if similarity > 0.8:
+            return SafetyResult(safe=False, reason="Semantic injection match")
+
+        return SafetyResult(safe=True)
+
+    async def check_output(self, action: AgentAction) -> SafetyResult:
+        """Check agent actions for exfiltration attempts."""
+        if self.output_filter.is_exfiltration(action):
+            return SafetyResult(safe=False, reason="Potential data exfiltration")
+        return SafetyResult(safe=True)
+```
+
 ## Tool poisoning
 Tool poisoning is the attack vector that almost no one discusses, and it
 may be the most dangerous. Agents call external tools and APIs dozens or
