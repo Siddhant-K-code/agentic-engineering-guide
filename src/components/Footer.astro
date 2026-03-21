@@ -5,7 +5,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 <footer class="border-t border-[var(--border-subtle)]">
   <div class="max-w-2xl mx-auto px-6 lg:px-10">
     <!-- Support card -->
-    <div class="my-8 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5">
+    <div class="my-8 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5 hover:border-[var(--text-tertiary)] transition-colors">
       <div class="flex items-start gap-3.5">
         <div class="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center shrink-0 mt-0.5">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -14,13 +14,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         </div>
         <div>
           <p class="text-[14px] font-medium text-[var(--text-primary)] mb-1">Support my work</p>
-          <p class="text-[13px] text-[var(--text-tertiary)] leading-relaxed mb-4">Most of this book was written on holidays, weekends, and past midnight after full workdays. If it saved you time or helped you make a better decision, consider supporting the work.</p>
+          <p class="text-[13px] text-[var(--text-tertiary)] leading-relaxed mb-4">This book was written on holidays, weekends, and past midnight. If it saved you time or helped you make a better decision, consider supporting it.</p>
           <div class="flex flex-wrap gap-2.5">
             <a
               href="https://github.com/sponsors/Siddhant-K-code"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center h-8 px-3.5 text-[13px] font-medium border border-[var(--border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-tertiary)] transition-colors"
+              class="inline-flex items-center h-8 px-3.5 text-[13px] font-medium border border-[var(--border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-tertiary)] hover:-translate-y-px transition-all"
             >
               Sponsor on GitHub
             </a>
@@ -28,7 +28,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
               href="https://buymeacoffee.com/siddhantkhare"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center h-8 px-3.5 text-[13px] font-medium border border-[var(--border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-tertiary)] transition-colors"
+              class="inline-flex items-center h-8 px-3.5 text-[13px] font-medium border border-[var(--border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-tertiary)] hover:-translate-y-px transition-all"
             >
               Buy me a coffee
             </a>
@@ -36,7 +36,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
               href="https://siddhantkhar5.gumroad.com/l/agentic-engineering-guide"
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center h-8 px-3.5 text-[13px] font-medium border border-[var(--border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-tertiary)] transition-colors"
+              class="inline-flex items-center h-8 px-3.5 text-[13px] font-medium border border-[var(--border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-tertiary)] hover:-translate-y-px transition-all"
             >
               Get the PDF & EPUB
             </a>

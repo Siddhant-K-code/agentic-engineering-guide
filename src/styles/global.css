@@ -272,3 +272,22 @@ body {
 #search-input:focus-visible {
   outline: none;
 }
+
+/* ── Button press feedback ── */
+a[class*="bg-[var(--text-primary)]"]:active,
+a[class*="border border-[var(--border)]"]:active,
+.gumroad-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Chapter nav hover: subtle arrow nudge ── */
+[data-chapter-nav] a:hover span:first-child {
+  transition: transform 0.15s ease;
+}
+
+/* ── Smooth transitions for interactive elements ── */
+a, button {
+  transition-property: color, background-color, border-color, opacity, transform;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
