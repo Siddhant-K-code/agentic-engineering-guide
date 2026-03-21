@@ -3,15 +3,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
-<BaseLayout title="404 | The Agentic Engineering Guide">
+<BaseLayout title="404 · The Agentic Engineering Guide">
   <div class="min-h-screen flex items-center justify-center px-6">
-    <div class="text-center">
-      <span class="font-[var(--font-mono)] text-xs tracking-widest uppercase text-[var(--text-tertiary)] mb-4 block">404</span>
-      <h1 class="text-2xl font-semibold mb-3">Page not found</h1>
-      <p class="text-sm text-[var(--text-secondary)] mb-6">The page you're looking for doesn't exist.</p>
-      <a href={`${base}/`} class="text-sm underline underline-offset-3 hover:text-[var(--text-secondary)] transition-colors">
-        ← Back to home
-      </a>
+    <div class="text-center max-w-sm">
+      <span class="font-[var(--font-mono)] text-7xl font-semibold text-[var(--text-primary)] opacity-10 select-none block mb-6">404</span>
+      <h1 class="text-2xl font-semibold mb-3">Nothing here</h1>
+      <p class="text-sm text-[var(--text-secondary)] mb-8">This page moved or never existed. Try one of these:</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a href={`${base}/`} class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-md hover:opacity-90 transition-opacity">
+          ← Home
+        </a>
+        <a href={`${base}/preface/`} class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium border border-[var(--border)] rounded-md hover:border-[var(--text-tertiary)] transition-colors">
+          Start reading
+        </a>
+      </div>
     </div>
   </div>
 </BaseLayout>
