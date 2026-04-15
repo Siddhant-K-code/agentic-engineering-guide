@@ -4,11 +4,25 @@
 		"context": ".",
 		"dockerfile": "Dockerfile"
 	},
-	"forwardPorts": [4321],
+	"forwardPorts": [4321, 8001],
 	"portsAttributes": {
 		"4321": {
 			"label": "Astro Dev Server",
 			"onAutoForward": "notify"
+		},
+		"8001": {
+			"label": "Mock OpenAI Server",
+			"onAutoForward": "silent"
 		}
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/python:1": {
+			"version": "3.12"
+		}
+	},
+	"postCreateCommand": "pip install --quiet openai tiktoken sentence-transformers fastapi uvicorn && npm install",
+	"postStartCommand": "bash -c 'if [ -z \"${OPENAI_API_KEY:-}\" ]; then uvicorn assignments.mock-server.main:app --port 8001 --log-level warning &>/tmp/mock-server.log & echo \"Mock server started on :8001\"; else echo \"OPENAI_API_KEY set — skipping mock server\"; fi'",
+	"remoteEnv": {
+		"OPENAI_BASE_URL": "http://localhost:8001/v1"
 	}
 }

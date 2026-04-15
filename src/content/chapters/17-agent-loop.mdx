@@ -189,4 +189,24 @@ approval, runs it in staging, waits for approval, and only then proposes
 the production migration. The gate configuration should be part of the
 task specification, not hardcoded in the agent framework.
 
-**Related Concepts:** [Agent Security](/07-agent-security-crisis/), [Agent Traces & OpenTelemetry](/14-agent-traces/) **Related Workflows:** [Your First Agent in Production](/23-first-agent-production/) 
+**Related Concepts:** [Agent Security](/07-agent-security-crisis/), [Agent Traces & OpenTelemetry](/14-agent-traces/) **Related Workflows:** [Your First Agent in Production](/23-first-agent-production/)
+
+import Assignment from "../../components/Assignment.astro";
+
+<Assignment
+  chapter={17}
+  title="Build a bare-metal agent loop"
+  starterFile="ch17-agent-loop/starter.py"
+  onaUrl="https://app.gitpod.io/#https://github.com/Siddhant-K-code/agentic-engineering-assignments/tree/main/ch17-agent-loop"
+  localUrl="https://github.com/Siddhant-K-code/agentic-engineering-assignments/raw/main/ch17-agent-loop/starter.py"
+>
+
+No framework. The starter implements a raw loop and prints state at each iteration: `iteration N | tokens: X | decision: [tool_call | final_answer]`. Task: find all Python files in `fixtures/` that import `os`. Watch the loop. Count iterations.
+
+### Questions
+
+1. **Unnecessary iterations.** Could it have answered in fewer iterations? What caused the extras: over-planning, redundant tool calls, or something else?
+
+2. **Hard stop.** Set `MAX_ITERATIONS = 3` and re-run. Does the agent complete the task? What does it return at the limit, and is that the right behavior?
+
+</Assignment> 

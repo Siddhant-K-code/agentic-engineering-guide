@@ -291,3 +291,18 @@ a, button {
   transition-duration: 0.15s;
   transition-timing-function: ease;
 }
+
+/* ── Assignment block — break out of prose max-width ── */
+.prose .assignment-block {
+  max-width: none;
+  width: 100%;
+}
+
+/* ── Ensure not-prose resets don't bleed into assignment content ── */
+.prose .not-prose * {
+  font-size: revert;
+  line-height: revert;
+  margin: revert;
+  padding: revert;
+  color: revert;
+}
