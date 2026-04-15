@@ -164,4 +164,24 @@ as a first-class discipline - with dedicated ownership, monitoring, and
 continuous improvement - consistently get better results from the same
 models than teams that treat it as an afterthought.
 
-**Related Workflows:** [Your First Agent in Production](/23-first-agent-production/) **Related Practices:** [Security Checklist & Review Policies](/24-security-checklist/) 
+**Related Workflows:** [Your First Agent in Production](/23-first-agent-production/) **Related Practices:** [Security Checklist & Review Policies](/24-security-checklist/)
+
+import Assignment from "../../components/Assignment.astro";
+
+<Assignment
+  chapter={4}
+  title="Make the context window visible"
+  starterFile="ch04-context-windows/starter.py"
+  onaUrl="https://app.gitpod.io/#https://github.com/Siddhant-K-code/agentic-engineering-assignments/tree/main/ch04-context-windows"
+  localUrl="https://github.com/Siddhant-K-code/agentic-engineering-assignments/raw/main/ch04-context-windows/starter.py"
+>
+
+Run the starter. It builds a multi-turn conversation and prints the full `messages` array after each turn with a running token count. Then add a 4th turn that asks the model to recall something specific from turn 1. Watch whether it does.
+
+### Questions
+
+1. **Lost in the middle.** At what turn did recall start to degrade? Did it match the prediction from the [Liu et al. paper](https://arxiv.org/abs/2307.03172) referenced in this chapter?
+
+2. **Dropping strategy.** Token count grew with every turn. At what point would you start dropping messages? Which ones go first, and which would you never drop?
+
+</Assignment> 

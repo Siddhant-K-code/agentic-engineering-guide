@@ -208,4 +208,24 @@ on them to catch sophisticated ones.
 - [ ] Security team reviews agent traces monthly for novel attack patterns
 
 
-**Related Concepts:** [Agent Security Crisis](/07-agent-security-crisis/), [Sandboxing](/10-sandboxing/) **Related Practices:** [Security Checklist & Review Policies](/24-security-checklist/) 
+**Related Concepts:** [Agent Security Crisis](/07-agent-security-crisis/), [Sandboxing](/10-sandboxing/) **Related Practices:** [Security Checklist & Review Policies](/24-security-checklist/)
+
+import Assignment from "../../components/Assignment.astro";
+
+<Assignment
+  chapter={9}
+  title="Inject, observe, defend"
+  starterFile="ch09-prompt-injection/starter.py"
+  onaUrl="https://app.gitpod.io/#https://github.com/Siddhant-K-code/agentic-engineering-assignments/tree/main/ch09-prompt-injection"
+  localUrl="https://github.com/Siddhant-K-code/agentic-engineering-assignments/raw/main/ch09-prompt-injection/starter.py"
+>
+
+The starter runs an agent that reads a support ticket and drafts a reply. Two fixture tickets are included: one with a direct injection, one with a subtle indirect injection. Run both. Then strengthen the system prompt and run again.
+
+### Questions
+
+1. **What worked.** Did the model comply with the direct injection? The subtle one? What made the difference: system prompt strength, injection placement, or something else?
+
+2. **Write a sanitizer.** This chapter says there is no parameterized query equivalent for prompt injection. But you can add an application-layer filter. Write a Python function (5 to 10 lines) that catches the two injections in the fixtures. Then describe one injection it would miss.
+
+</Assignment> 
