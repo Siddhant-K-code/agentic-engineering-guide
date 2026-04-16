@@ -7,7 +7,7 @@ interface Props {
 }
 
 const { title, description = "Context engineering, agent security, cost control, and team practices for AI agent infrastructure in production. 33 chapters." } = Astro.props;
-const gaId = import.meta.env.PUBLIC_GA_ID || "G-LYNMNG6M7W";
+const gaId = "G-LYNMNG6M7W";
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") || "";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const canonicalUrl = `${siteUrl}${Astro.url.pathname}`;
