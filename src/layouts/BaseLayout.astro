@@ -45,15 +45,13 @@ const canonicalUrl = `${siteUrl}${Astro.url.pathname}`;
     <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
 
     <!-- Google Analytics -->
-    {gaId && (
-      <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
-      <script define:vars={{ gaId }}>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', gaId);
-      </script>
-    )}
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-LYNMNG6M7W');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LYNMNG6M7W"></script>
 
     <!-- Theme: apply before paint to prevent flash -->
     <script is:inline>
