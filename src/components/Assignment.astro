@@ -85,11 +85,11 @@ const chapterSlug = `ch${String(chapter).padStart(2, "0")}`;
   </div>
 </section>
 
-<script>
-  document.querySelectorAll<HTMLAnchorElement>("[data-track]").forEach((el) => {
-    el.addEventListener("click", () => {
-      const event = el.dataset.track;
-      const chapter = el.dataset.chapter;
+<script is:inline>
+  document.querySelectorAll("[data-track]").forEach(function(el) {
+    el.addEventListener("click", function() {
+      var event = el.getAttribute("data-track");
+      var chapter = el.getAttribute("data-chapter");
       if (typeof window.gtag === "function") {
         window.gtag("event", event, {
           event_category: "practical_track",
