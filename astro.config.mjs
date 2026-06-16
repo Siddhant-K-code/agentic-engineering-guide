@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   site: "https://agents.siddhantkhare.com",
   base: "/",
-  integrations: [mdx(), sitemap()],
+  integrations: [mdx({ gfm: true }), sitemap()],
   server: {
     allowedHosts: true,
   },
